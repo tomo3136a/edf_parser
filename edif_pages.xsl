@@ -13,7 +13,7 @@
             <xsl:for-each select="cell[@name=$cell_ref]/view">
                 <xsl:variable name="view_name" select="@name"/>
                 <xsl:for-each select="contents/page">
-                    <xsl:value-of select="@name"/>
+                    <xsl:value-of select="@name" disable-output-escaping="yes"/>
                     <xsl:text>&#10;</xsl:text>
                 </xsl:for-each>
             </xsl:for-each>

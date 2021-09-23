@@ -3,6 +3,8 @@
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
     xmlns="http://www.w3.org/2000/svg">
     <xsl:output method="xml" media-type="text/xsl" indent="yes"/>
+    <xsl:param name="page"/>
+    <xsl:key name="vcl" match="//view" use="concat(@name,'-',../@name,'-',../../@name)"/>
 
     <!--root-->
     <xsl:template match="/">
@@ -11,7 +13,7 @@
     <xsl:template match="edif">
         <xsl:variable name="x" select="0-10"/>
         <xsl:variable name="y" select="0-10"/>
-        <xsl:variable name="dx" select="2359+10"/>
+        <xsl:variable name="dx" select="1359+10"/>
         <xsl:variable name="dy" select="1674+10"/>
         <svg xmlns="http://www.w3.org/2000/svg"
             xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -31,21 +33,17 @@
     <!--design-->
     <xsl:template match="design">
         <g transform="scale(1,-1)">
-            <xsl:apply-templates select="cellRef"/>
+            <xsl:for-each select="cellRef">
+                <xsl:for-each select="libraryRef">
+                    <xsl:variable name="ref" select="concat('#',../@name,'-',@name)"/>
+                    <use>
+                        <xsl:attribute namespace="http://www.w3.org/1999/xlink" name="href">
+                            <xsl:value-of select="$ref"/>
+                        </xsl:attribute>
+                    </use>
+                </xsl:for-each>
+            </xsl:for-each>
         </g>
-    </xsl:template>
-    <xsl:template match="cellRef">
-        <xsl:apply-templates select="libraryRef" mode="design">
-            <xsl:with-param name="ref_cell" select="@name"/>
-        </xsl:apply-templates>
-    </xsl:template>
-    <xsl:template match="libraryRef" mode="design">
-        <xsl:param name="ref_cell"/>
-        <use>
-            <xsl:attribute namespace="http://www.w3.org/1999/xlink" name="href">
-                <xsl:value-of select="concat('#',$ref_cell)"/>
-            </xsl:attribute>
-        </use>
     </xsl:template>
 
     <!--library/external-->
@@ -68,17 +66,30 @@
 
     <!--cell-->
     <xsl:template match="cell">
-        <g stroke="black" stroke-width="1">
+        <!-- <g> -->
+        <g stroke="black" stroke-width="1" fill="#0">
             <xsl:attribute name="id">
                 <xsl:value-of select="@name"/>
+                <xsl:text>-</xsl:text>
+                <xsl:value-of select="../@name"/>
             </xsl:attribute>
             <xsl:apply-templates select="view"/>
         </g>
     </xsl:template>
     <xsl:template match="view">
-        <xsl:apply-templates select="interface"/>
-        <xsl:apply-templates select="contents"/>
-        <xsl:apply-templates select="property"/>
+        <!-- <g stroke="black" stroke-width="1"> -->
+        <g>
+            <xsl:attribute name="id">
+                <xsl:value-of select="@name"/>
+                <xsl:text>-</xsl:text>
+                <xsl:value-of select="../@name"/>
+                <xsl:text>-</xsl:text>
+                <xsl:value-of select="../../@name"/>
+            </xsl:attribute>
+            <xsl:apply-templates select="interface"/>
+            <xsl:apply-templates select="contents"/>
+            <xsl:apply-templates select="property"/>
+        </g>
     </xsl:template>
 
     <!--interface-->
@@ -100,6 +111,8 @@
         <xsl:apply-templates select="parameterDisplay"/>
         <xsl:apply-templates select="property"/>
     </xsl:template>
+
+    <!--port-->
     <xsl:template match="port">
         <xsl:apply-templates select="figure"/>
         <xsl:apply-templates select="designator"/>
@@ -108,28 +121,28 @@
 
     <!--symbol-->
     <xsl:template match="symbol">
-        <xsl:apply-templates select="portImplementation"/>
+        <xsl:apply-templates select="boundingBox"/>
         <xsl:apply-templates select="figure"/>
         <xsl:apply-templates select="instance"/>
+        <xsl:apply-templates select="portImplementation"/>
         <xsl:apply-templates select="commentGraphics"/>
         <xsl:apply-templates select="annotate"/>
         <xsl:apply-templates select="pageSize"/>
-        <xsl:apply-templates select="boundingBox"/>
-        <xsl:apply-templates select="propertyDisplay"/>
         <xsl:apply-templates select="keywordDisplay"/>
+        <xsl:apply-templates select="propertyDisplay"/>
         <xsl:apply-templates select="parameterDisplay"/>
         <xsl:apply-templates select="property"/>
     </xsl:template>
 
     <!--portImplementation-->
     <xsl:template match="portImplementation">
-        <xsl:apply-templates select="name"/>
-        <xsl:apply-templates select="keywordDisplay"/>
         <xsl:apply-templates select="figure"/>
         <xsl:apply-templates select="instance"/>
         <xsl:apply-templates select="connectLocation">
             <xsl:with-param name="name" select="name/text()"/>
         </xsl:apply-templates>
+        <xsl:apply-templates select="name"/>
+        <xsl:apply-templates select="keywordDisplay"/>
     </xsl:template>
     <xsl:template match="connectLocation">
         <xsl:apply-templates select="figure"/>
@@ -137,14 +150,14 @@
 
     <!--contents-->
     <xsl:template match="contents">
-        <!--offPageConnector-->
-        <xsl:apply-templates select="figure"/>
-        <xsl:apply-templates select="page"/>
+        <xsl:apply-templates select="boundingBox"/>
         <xsl:apply-templates select="commentGraphics"/>
+        <xsl:apply-templates select="figure"/>
+        <!--offPageConnector-->
+        <xsl:apply-templates select="page"/>
         <xsl:apply-templates select="instance"/>
         <xsl:apply-templates select="net"/>
         <xsl:apply-templates select="portImplementation"/>
-        <xsl:apply-templates select="boundingBox"/>
     </xsl:template>
     <xsl:template match="page">
         <xsl:apply-templates select="pageSize"/>
@@ -155,16 +168,16 @@
         <xsl:apply-templates select="boundingBox"/>
     </xsl:template>
     <xsl:template match="commentGraphics">
-        <xsl:apply-templates select="annotate"/>
+        <xsl:apply-templates select="boundingBox"/>
         <xsl:apply-templates select="figure"/>
         <xsl:apply-templates select="instance"/>
-        <xsl:apply-templates select="boundingBox"/>
+        <xsl:apply-templates select="annotate"/>
         <xsl:apply-templates select="property"/>
     </xsl:template>
-    <xsl:template match="annotate">
+    <xsl:template match="designator">
         <xsl:apply-templates select="stringDisplay"/>
     </xsl:template>
-    <xsl:template match="designator">
+    <xsl:template match="annotate">
         <xsl:apply-templates select="stringDisplay"/>
     </xsl:template>
     <xsl:template match="property">
@@ -176,45 +189,68 @@
 
     <!--instance-->
     <xsl:template match="instance">
-        <xsl:param name="x" select="number(substring-before(transform/origin/pt,' '))"/>
-        <xsl:param name="y" select="number(substring-after(transform/origin/pt,' '))"/>
-        <xsl:param name="a" select="transform/orientation/text()"/>
-        <g fill="#fff" stroke="black" stroke-width="2">
+        <g>
             <xsl:for-each select="transform">
                 <xsl:call-template name="transform"/>
             </xsl:for-each>
-            <rect fill="black" x="-3" y="-3" width="6" height="6" stroke="black" stroke-width="1"/>
-            <text x="5" y="0" font-famiry="sans-serif" font-size="50%" stroke="black" stroke-width="1" text-anchor="start" dominant-baseline="central" transform="scale(-1,1)">
-                <xsl:value-of select="$a"/>
-            </text>
-            <use fill="#fff" stroke="black" stroke-width="2">
-                <xsl:attribute namespace="http://www.w3.org/1999/xlink" name="href">
-                    <xsl:value-of select="concat('#',viewRef/cellRef/@name)"/>
-                </xsl:attribute>
-            </use>
+            <xsl:call-template name="instance_viewlist"/>
         </g>
+        <xsl:apply-templates select="parameterAssign"/>
         <xsl:apply-templates select="portInstance"/>
         <xsl:apply-templates select="designator"/>
         <xsl:apply-templates select="property"/>
     </xsl:template>
+    <xsl:template name="instance_viewlist">
+        <xsl:for-each select="viewRef">
+            <xsl:call-template name="instance_viewref"/>
+        </xsl:for-each>
+        <xsl:for-each select="viewList">
+            <xsl:call-template name="instance_viewlist"/>
+        </xsl:for-each>
+    </xsl:template>
+    <xsl:template name="instance_viewref">
+        <use>
+            <xsl:attribute namespace="http://www.w3.org/1999/xlink" name="href">
+                <xsl:text>#</xsl:text>
+                <xsl:value-of select="@name"/>
+                <xsl:text>-</xsl:text>
+                <xsl:if test="not (count(cellRef)=0)">
+                    <xsl:value-of select="cellRef/@name"/>
+                </xsl:if>
+                <xsl:if test="count(cellRef)=0">
+                    <xsl:value-of select="ancestor::node()/cell/@name"/>
+                </xsl:if>
+                <xsl:text>-</xsl:text>
+                <xsl:if test="not (count(cellRef/libraryRef)=0)">
+                    <xsl:value-of select="cellRef/libraryRef/@name"/>
+                </xsl:if>
+                <xsl:if test="count(cellRef/libraryRef)=0">
+                    <xsl:value-of select="ancestor::node()/library/@name"/>
+                </xsl:if>
+            </xsl:attribute>
+        </use>
+    </xsl:template>
 
     <xsl:template match="portInstance">
         <xsl:apply-templates select="name"/>
+        <!--TODO: string-->
         <xsl:apply-templates select="designator"/>
-    </xsl:template>
-
-    <xsl:template match="viewRef">
-        <xsl:apply-templates select="cellRef"/>
     </xsl:template>
 
     <!--net-->
     <xsl:template match="net">
-        <!--joined-->
         <g stroke="black" stroke-width="1">
             <xsl:attribute name="id">
                 <xsl:value-of select="@name"/>
             </xsl:attribute>
+            <!--joined-->
+            <!--criticary-->
+            <!--netDelay-->
+            <xsl:apply-templates select="commonGraphics"/>
             <xsl:apply-templates select="figure"/>
+            <xsl:apply-templates select="instance"/>
+            <xsl:apply-templates select="net"/>
+            <xsl:apply-templates select="property"/>
         </g>
     </xsl:template>
 
@@ -222,13 +258,16 @@
     <xsl:template match="keywordDisplay">
         <xsl:param name="name" select="../name/text()"/>
         <xsl:param name="kw" select="text()"/>
-        <xsl:for-each select="../../../port[@name=$name]/*">
+        <xsl:if test="not (count(display)=0)">
             <xsl:if test="name()=$kw">
-                <text>
-                    <xsl:value-of select="text()"/>
-                </text>
+                <!-- display -->                                            <!--TODO-->
+                <!-- <text font-size="50%">
+                    <xsl:for-each select="../../../port[@name=$name]/*">
+                        <xsl:value-of select="text()"/>
+                    </xsl:for-each>
+                </text> -->
             </xsl:if>
-        </xsl:for-each>
+        </xsl:if>
     </xsl:template>
 
     <xsl:template name="transform">
@@ -260,6 +299,12 @@
                     </xsl:if>
                     <xsl:if test="$a='MX'">
                         <xsl:text>scale(1,-1)</xsl:text>
+                    </xsl:if>
+                    <xsl:if test="$a='MYR90'">
+                        <xsl:text>rotate(90)scale(-1,1)</xsl:text>
+                    </xsl:if>
+                    <xsl:if test="$a='MXR90'">
+                        <xsl:text>rotate(90)scale(1,-1)</xsl:text>
                     </xsl:if>
                 </xsl:if>
             </xsl:attribute>
@@ -302,6 +347,7 @@
     <!--string-->
     <xsl:template match="stringDisplay|name">
         <xsl:param name="s" select="text()"/>
+        <xsl:variable name="ff" select="'san-self'"/>
         <xsl:if test="count(display/figureGroupOverride/visible/false)=0">
             <g>
                 <xsl:if test="not (count(display/origin)=0)">
@@ -311,6 +357,14 @@
                 </xsl:if>
                 <g transform="scale(1,-1)">
                     <text stroke-width="0.5" font-famiry="sans-serif" font-size="50%">
+                        <xsl:if test="not (count(display/figureGroupOverride/textHeight)=0)">
+                            <xsl:attribute name="font-size">
+                                <xsl:value-of select="display/figureGroupOverride/textHeight"/>
+                                <xsl:message>
+                                    <xsl:value-of select="display/figureGroupOverride/textHeight"/>
+                                </xsl:message>
+                            </xsl:attribute>
+                        </xsl:if>
                         <xsl:for-each select="display">
                             <xsl:call-template name="text-anchor"/>
                         </xsl:for-each>
@@ -321,30 +375,6 @@
             </g>
         </xsl:if>
     </xsl:template>
-
-    <!-- <xsl:template match="keywordDisplay">
-        <xsl:param name="s" select="text()"/>
-        <xsl:if test="count(display/figureGroupOverride/visible/false)=0">
-            <g>
-                <xsl:if test="not (count(display/origin)=0)">
-                    <xsl:for-each select="display">
-                        <xsl:call-template name="transform"/>
-                    </xsl:for-each>
-                </xsl:if>
-                <g transform="scale(1,-1)">
-                    <text stroke-width="0.5" font-famiry="sans-serif" font-size="50%">
-                        <xsl:for-each select="display">
-                            <xsl:call-template name="text-anchor"/>
-                        </xsl:for-each>
-                        <xsl:text>[</xsl:text>
-                        <xsl:value-of select="translate($s,'&quot;','')"/>
-                        <xsl:text>]</xsl:text>
-                    </text>
-                    <circle r="1" fill="#0" stroke="red" stroke-width="1" cx="0" cy="0"/>
-                </g>
-            </g>
-            </xsl:if>
-    </xsl:template> -->
 
     <!--figure-->
     <xsl:template match="figure">
@@ -358,8 +388,18 @@
         <xsl:param name="y1" select='number(substring-after(pt[1]," "))'/>
         <xsl:param name="x2" select='number(substring-before(pt[2]," "))'/>
         <xsl:param name="y2" select='number(substring-after(pt[2]," "))'/>
-
-        <circle r="2" fill="#0" stroke="green" stroke-width="1">
+        <circle fill="none">
+            <xsl:attribute name="cx">
+                <xsl:value-of select="(number($x2)+number($x1))*0.5"/>
+            </xsl:attribute>
+            <xsl:attribute name="cy">
+                <xsl:value-of select="(number($y2)+number($y1))*0.5"/>
+            </xsl:attribute>
+            <xsl:attribute name="r">
+                <xsl:value-of select="(number($x2)-number($x1))*0.5"/>
+            </xsl:attribute>
+        </circle>
+        <!-- <circle r="2" fill="#0" stroke="green" stroke-width="1">
             <xsl:attribute name="cx">
                 <xsl:value-of select="$x1"/>
             </xsl:attribute>
@@ -374,28 +414,13 @@
             <xsl:attribute name="cy">
                 <xsl:value-of select="$y2"/>
             </xsl:attribute>
-        </circle>
-
-        <circle fill="none" stroke="#0">
-            <xsl:attribute name="cx">
-                <xsl:value-of select="(number($x2)+number($x1))*0.5"/>
-            </xsl:attribute>
-            <xsl:attribute name="cy">
-                <xsl:value-of select="(number($y2)+number($y1))*0.5"/>
-            </xsl:attribute>
-            <xsl:attribute name="r">
-                <xsl:value-of select="(number($x2)-number($x1))*0.5"/>
-            </xsl:attribute>
-            <!-- <xsl:attribute name="height">
-                <xsl:value-of select="number($y2)-number($y1)"/>
-            </xsl:attribute> -->
-        </circle>
+        </circle> -->
     </xsl:template>
     <!--dot-->
     <xsl:template match="dot">
         <xsl:param name="x" select='number(substring-before(pt[1]," "))'/>
         <xsl:param name="y" select='number(substring-after(pt[1]," "))'/>
-        <circle r="4" fill="#0" stroke="orange" stroke-width="2">
+        <circle r="1" fill="#0">
             <xsl:attribute name="cx">
                 <xsl:value-of select="$x"/>
             </xsl:attribute>
@@ -415,7 +440,7 @@
     </xsl:template>
     <!--polygon-->
     <xsl:template match="polygon">
-        <xsl:param name="fill" select="'none'"/>
+        <xsl:param name="fill" select="'#0'"/>                      <!--TODO-->
         <path>
             <xsl:attribute name="fill">
                 <xsl:value-of select="$fill"/>
