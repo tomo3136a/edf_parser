@@ -83,18 +83,19 @@ function edif2svg($path) {
     }
     # output page list
     $xslt_path = (Get-Location).path + "\\edif_pages.xsl"
-    $page_path = (Get-Location).path + "\\" + $name + "_pages.txt"
+    $page_path = (Get-Location).path + "\\" + $name + "_pages.tmp"
     xslt $edif_path $xslt_path $page_path
 
     #output schematic
     Get-Content $page_path | ForEach-Object {
+        $page = $_
         $xslt_path = (Get-Location).path + "\\edif_refs.xsl"
-        $out_path = (Get-Location).path + "\\" + $name + "_" + $_ + "_refs.txt"
-        xslt $edif_path $xslt_path $out_path @{page = $_}
+        $out_path = (Get-Location).path + "\\" + $name + "_" + $page + "_refs.tmp"
+        xslt $edif_path $xslt_path $out_path @{page = $page}
 
         $xslt_path = (Get-Location).path + "\\edif2svg.xsl"
-        $out_path = (Get-Location).path + "\\" + $name + "_" + $_ + ".svg"
-        $_ | Out-Host
-        xslt $edif_path $xslt_path $out_path @{page = $_}
+        $out_path = (Get-Location).path + "\\" + $name + "_" + $page + ".svg"
+        $page | Out-Host
+        xslt $edif_path $xslt_path $out_path @{page = $page}
     }
 }
