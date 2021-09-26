@@ -91,6 +91,40 @@ design は、edif ファイルのトップデザイン cell へ参照する。
 
 ---
 
+## nameDef
+
+定義に使用する名前
+
+    ident                           # 名前をIDで定義
+    (name ident (display ...))      # 名前をIDで定義, かつIDの表示
+    (rename                         # 名前をIDで定義, かつIDの表示, ただしIDの表示名がある。
+        ident/(name ident ...)
+        "str"/(strringDisplay ...)
+    )
+
+## nameRef
+
+    (member )
+
+## figureGroup/figureGroupOverride/figure
+
+figureGroup は、図形の機能種別。ライブラリごとの technology で定義する。
+色(color)、コーナー形状(cornerType)、端点形状(endType)、文字列の高さ(textHeight)、パスの幅(pathWidth)、フィルパターン(fillPattern)、プロパティ(property)の属性を纏める。
+property には、ETCFONTNAME,TEXTWIDTH があるが、ツール依存。
+
+figureGroup の名前は、ツール依存であるが、主に以下がある。
+
+    PINNUMBER, PINNAME, PARTREFERENCE, PARTVALUE, DISPLAYPROPERTY, WIRE, PARTBODY, OFFPAGECONNECTORTEXT, TITLEBLOCK, PAGEBORDER, COMMENTTEXT
+
+figureGroupOverride は、一時的にfigureGroupの内容を置き換えて使用する。
+
+figure は、figureGroup の名前で図形を描画する。
+
+figureArea, figureRepimeter, figureWidth
+
+
+
+
 ## sutatus
 
 edif, external, library, cell, view, design の情報の属性定義
@@ -111,8 +145,8 @@ external/library の設計情報定義
 
     (technology
         (numberDefinition                               # 設計情報
-            (scale 0/(e 0 0) 0/(e 0 0) (unit ...))...   # 基準を指定
-            (gridMap 0/(e 0 0) 0/(e 0 0))...
+            (scale 0/(e 0 0) 0/(e 0 0) (unit ...))...   # 基準を指定[1 (e 254 -6)]
+            (gridMap 0/(e 0 0) 0/(e 0 0))...            # [1 1]
         )
         (figureGroup ...)...                            # 図形属性設定
         (fabricate [nameDef] [nameRef])...              # レイヤに対応した図形属性の対応設定
@@ -122,22 +156,22 @@ external/library の設計情報定義
 
 ## unit
 
-    単位の種別
-
-    (unit DISTANCE/CAPACITANCE/CURRENT/RESISTANCE/TEMPERATURE/
-          TIME/VOLTAGE/MASS/FREQUENCY/INDUCTANCE/ENERGY/POWER/
-          CHARGE/CONDUCTANCE/FLUX/ANGLE)
+単位の種別
 
 use: scale, parameter, property
 
 例) (e 254 -6) => 254*10^(6-6)=254 cm
 
+    (unit DISTANCE/CAPACITANCE/CURRENT/RESISTANCE/TEMPERATURE/
+          TIME/VOLTAGE/MASS/FREQUENCY/INDUCTANCE/ENERGY/POWER/
+          CHARGE/CONDUCTANCE/FLUX/ANGLE)
+
 ## viewMap
 
-値の単位
+view のマッピング。portのマッピングとして portRef, portGroup
 
     (viewMap
-        (portMap (portRef)... (portGroup)...)...
+        (portMap (portRef)... (portGroup [nameRef]/(portRef)...)...)...
         (portBackAnotate (portRef) ...)... 
         (instanceMap (instanceRef)... (instanceGroup)...)... 
         (instanceBackAnotate (instanceRef) ...)... 
