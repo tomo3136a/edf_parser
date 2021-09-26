@@ -3,8 +3,10 @@
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
     <xsl:output method="text"/>
     <xsl:param name="page"/>
-    <xsl:key name="refs" match="//viewRef" use="concat(@name,'-',cellRef/@name,'-',cellRef/libraryRef/@name)"/>
-    <!-- <xsl:key name="refs" match="//viewRef" use="."/> -->
+    <xsl:variable name="lowercase" select="'abcdefghijklmnopqrstuvwxyz'" />
+    <xsl:variable name="uppercase" select="'ABCDEFGHIJKLMNOPQRSTUVWXYZ'" />
+
+    <xsl:key name="refs" match="//viewRef" use="translate(concat(cellRef/libraryRef/@name,'-',cellRef/@name,'-',@name),'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ')"/>
 
     <xsl:template match="/">
         <xsl:for-each select="edif">
@@ -23,10 +25,9 @@
     <xsl:template match="page">
         <xsl:param name="library_name" select="../../@name"/>
         <xsl:param name="cell_name" select="../@name"/>
-        <xsl:for-each select=".//viewRef[generate-id()=generate-id(key('refs',concat(@name,'-',cellRef/@name,'-',cellRef/libraryRef/@name))[1])]">
-        <!-- <xsl:for-each select=".//viewRef[generate-id()=generate-id(key('refs',.)[1])]"> -->
+        <xsl:for-each select=".//viewRef[generate-id()=generate-id(key('refs',translate(concat(cellRef/libraryRef/@name,'-',cellRef/@name,'-',@name),$lowercase,$uppercase))[1])]">
             <xsl:sort select="@name"/>
-            <xsl:variable name="ref" select="concat(@name,'-',cellRef/@name,'-',cellRef/libraryRef/@name)"/>
+            <xsl:variable name="ref" select="concat(cellRef/libraryRef/@name,'-',cellRef/@name,'-',@name)"/>
             <xsl:value-of select="$ref"/>
             <xsl:text>&#10;</xsl:text>
         </xsl:for-each>
