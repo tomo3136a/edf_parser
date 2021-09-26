@@ -1,3 +1,4 @@
+# s-expression token
 filter s_tok {
     begin { $s = ""; $seq = 0; $skip = 0 }
     process {
@@ -22,6 +23,7 @@ filter s_tok {
     end { if ($s) { $s; $s = "" } }
 }
 
+# s-expression parse
 filter s_prs {
     begin {
         [xml]$doc = [System.Xml.XmlDocument]::new()
@@ -30,9 +32,16 @@ filter s_prs {
         # $sk = @(
         #     "portImplementation", "figureGroup", "figure", "status", "edifLevel")
         $nm = @(
-            "edif", "design", "external", "library", "cell", "view", "page", "property", 
-            "portImplementation", "figureGroup", "figure", "port", "instance", "net", 
-            "viewref", "portref", "instanceref", "cellref", "libraryref", "figureGroupOverride")
+            "edif", "design", "external", "library", "cell", "view", "page", 
+            "instance", "port", "portBundle", "portListAlias", "portImplementation", 
+            "viewRef", "portRef", "instanceRef", "cellRef", "libraryRef", 
+            "figureGroup", "figureGroupOverride", "figure", "offpageConnector",
+            # "interFigureGroupSpacing", "intraFigureGroupSpacing", 
+            # "simulate", "array", "fablicate", "notchSpace", "rectangleSize", 
+            # "logicPort", "logicValue", "notAllowed", "waveValue", 
+            # "enclosureDistance", "overhangDistance", "overlapDistance",
+            "net", "netBundle", "property", "parameter", "display"
+            )
     }
     process {
         if ($_ -eq "(") { if ($lvl) { $lvl++; break } $seq = 1; break }
@@ -61,6 +70,7 @@ filter s_prs {
     end { $doc }
 }
 
+# xslt transformation
 function xslt($xmlPath, $xsltPath, $outPath, $col = @{}) {
     $xslt = New-Object System.Xml.Xsl.XslCompiledTransform
     $xslt.Load($xsltPath)
@@ -73,12 +83,16 @@ function xslt($xmlPath, $xsltPath, $outPath, $col = @{}) {
     $wrt.Close()
 }
 
-function edif2svg($path) {
-    # $path = ".\test2.edn"
+# path: ./test/test.edn
+# encoding: utf-8, shift_jis, euc-jp
+function edif2svg($path, $encoding="utf-8") {
     $name = $path -replace "\.ed[nif]+$", ""
     $edif_path = (Get-Location).path + "\\" + $path + ".xml"
+    # convert edif to xml
     if (-not (Test-Path $edif_path)) {
-        $doc = Get-Content $path -Encoding UTF8 | s_tok | s_prs
+        $path = Resolve-Path $path
+        $enc = [Text.Encoding]::GetEncoding($encoding)
+        $doc = [System.IO.File]::ReadAllLines($path, $enc) | s_tok | s_prs
         $doc.Save($edif_path)
     }
     # output page list
@@ -86,13 +100,23 @@ function edif2svg($path) {
     $page_path = (Get-Location).path + "\\" + $name + "_pages.tmp"
     xslt $edif_path $xslt_path $page_path
 
-    #output schematic
+    $xslt_path = (Get-Location).path + "\\edif_nodes.xsl"
+    $out_path = (Get-Location).path + "\\" + $name + "_" + $page + "_nodes.tmp"
+    xslt $edif_path $xslt_path $out_path
+
     Get-Content $page_path | ForEach-Object {
         $page = $_
+        #output reference list
         $xslt_path = (Get-Location).path + "\\edif_refs.xsl"
         $out_path = (Get-Location).path + "\\" + $name + "_" + $page + "_refs.tmp"
         xslt $edif_path $xslt_path $out_path @{page = $page}
 
+        #output figuregroup list
+        $xslt_path = (Get-Location).path + "\\edif_grps.xsl"
+        $out_path = (Get-Location).path + "\\" + $name + "_" + $page + "_grps.tmp"
+        xslt $edif_path $xslt_path $out_path @{page = $page}
+
+        #output schematic
         $xslt_path = (Get-Location).path + "\\edif2svg.xsl"
         $out_path = (Get-Location).path + "\\" + $name + "_" + $page + ".svg"
         $page | Out-Host
