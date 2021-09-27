@@ -20,30 +20,24 @@
         <!--page list-->
         <xsl:for-each select="(library|external)[@name=$library_ref]">
             <xsl:for-each select="cell[@name=$cell_ref]/view/contents">
-                <xsl:message>
-                    <xsl:text>page-list:&#10;</xsl:text>
-                    <xsl:apply-templates select="page[@name=$page]"/>
-                </xsl:message>
+                <xsl:text>page-list:&#10;</xsl:text>
+                <xsl:apply-templates select="page[@name=$page]"/>
             </xsl:for-each>
         </xsl:for-each>
 
         <!--figureGroup list-->
         <xsl:for-each select="(library|external)[@name=$library_ref]/technology">
-            <xsl:message>
-                <xsl:text>figureGroup-list:&#10;</xsl:text>
-                <xsl:for-each select="figureGroup">
-                    <xsl:call-template name="_name"/>
-                </xsl:for-each>
-                <xsl:text>&#10;</xsl:text>
-            </xsl:message>
+            <xsl:text>figureGroup-list:&#10;</xsl:text>
+            <xsl:for-each select="figureGroup">
+                <xsl:call-template name="_name"/>
+            </xsl:for-each>
+            <xsl:text>&#10;</xsl:text>
         </xsl:for-each>
 
         <!--fogureGroup item list-->
         <xsl:for-each select="(library|external)[@name=$library_ref]/technology/figureGroup[1]">
-            <xsl:message>
-                <xsl:text>figureGroup-item-list:&#10;</xsl:text>
-                <xsl:call-template name="_figureGroupItem"/>
-            </xsl:message>
+            <xsl:text>figureGroup-item-list:&#10;</xsl:text>
+            <xsl:call-template name="_figureGroupItem"/>
         </xsl:for-each>
 
         <!--figureGroup contents-->

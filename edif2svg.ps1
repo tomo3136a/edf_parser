@@ -41,7 +41,7 @@ filter s_prs {
             # "logicPort", "logicValue", "notAllowed", "waveValue", 
             # "enclosureDistance", "overhangDistance", "overlapDistance",
             "net", "netBundle", "property", "parameter", "display"
-            )
+        )
     }
     process {
         if ($_ -eq "(") { if ($lvl) { $lvl++; break } $seq = 1; break }
@@ -85,7 +85,7 @@ function xslt($xmlPath, $xsltPath, $outPath, $col = @{}) {
 
 # path: ./test/test.edn
 # encoding: utf-8, shift_jis, euc-jp
-function edif2svg($path, $encoding="utf-8") {
+function edif2svg($path, $encoding = "utf-8") {
     $name = $path -replace "\.ed[nif]+$", ""
     $edif_path = (Get-Location).path + "\\" + $path + ".xml"
     # convert edif to xml
@@ -95,31 +95,30 @@ function edif2svg($path, $encoding="utf-8") {
         $doc = [System.IO.File]::ReadAllLines($path, $enc) | s_tok | s_prs
         $doc.Save($edif_path)
     }
-    # output page list
-    $xslt_path = (Get-Location).path + "\\edif_pages.xsl"
+
+    $cmd = @("nodes", "pages", "grps")
+    $cmd | ForEach-Object {
+        $kw = $_
+        $xslt_path = (Get-Location).path + "\\edif_${kw}.xsl"
+        $out_path = (Get-Location).path + "\\" + $name + "_${kw}.tmp"
+        xslt $edif_path $xslt_path $out_path
+    }
+
+    $cmd = @("refs","svg")
     $page_path = (Get-Location).path + "\\" + $name + "_pages.tmp"
-    xslt $edif_path $xslt_path $page_path
-
-    $xslt_path = (Get-Location).path + "\\edif_nodes.xsl"
-    $out_path = (Get-Location).path + "\\" + $name + "_" + $page + "_nodes.tmp"
-    xslt $edif_path $xslt_path $out_path
-
     Get-Content $page_path | ForEach-Object {
         $page = $_
-        #output reference list
-        $xslt_path = (Get-Location).path + "\\edif_refs.xsl"
-        $out_path = (Get-Location).path + "\\" + $name + "_" + $page + "_refs.tmp"
-        xslt $edif_path $xslt_path $out_path @{page = $page}
-
-        #output figuregroup list
-        $xslt_path = (Get-Location).path + "\\edif_grps.xsl"
-        $out_path = (Get-Location).path + "\\" + $name + "_" + $page + "_grps.tmp"
-        xslt $edif_path $xslt_path $out_path @{page = $page}
-
-        #output schematic
-        $xslt_path = (Get-Location).path + "\\edif2svg.xsl"
+        $cmd | ForEach-Object {
+            $kw = $_
+            $xslt_path = (Get-Location).path + "\\edif_${kw}.xsl"
+            $out_path = (Get-Location).path + "\\" + $name + "_" + $page + "_${kw}.tmp"
+            xslt $edif_path $xslt_path $out_path @{page = $page }
+        }
+    
+        # #output schematic
+        $xml = Get-Content ((Get-Location).path + "\\" + $name + "_" + $page + "_svg.tmp")
+        $doc=[xml]$xml
         $out_path = (Get-Location).path + "\\" + $name + "_" + $page + ".svg"
-        $page | Out-Host
-        xslt $edif_path $xslt_path $out_path @{page = $page}
+        $doc.Save($out_path)
     }
 }
