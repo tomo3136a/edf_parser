@@ -1,0 +1,4 @@
+width	height	color	text	pin1	pin2	pin3	pin4	x	y
+10	10	0x00ffff	ABC						
+20	20	0x333333	DEF						
+100	100	0xff0000	GHI						
