@@ -1,4 +1,4 @@
-width	height	color	text	pin1	pin2	pin3	pin4	x	y
-10	10	0x00ffff	ABC						
-20	20	0x333333	DEF						
-100	100	0xff0000	GHI						
+width,height,color,text,font,x,y,a,r,n1,n2,n3,n4
+100,100,0x0000ff,ABC,40,0,0,0,5,8,9,10,11
+20,20,0x00ff00,DEFDEFDEF,20,0,0,0,5,4,5,6,7
+10,10,0xff0000,GHIGHI,24,0,0,0,5,0,1,2,3
