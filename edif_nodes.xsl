@@ -9,7 +9,6 @@
 
     <xsl:template match="/">
         <xsl:for-each select="//*[generate-id()=generate-id(key('nodes',translate(name(),$lowercase,$uppercase))[1])]">
-            <!-- <xsl:sort select="name()"/> -->
             <xsl:value-of select="name()"/>
             <xsl:text>&#10;</xsl:text>
         </xsl:for-each>

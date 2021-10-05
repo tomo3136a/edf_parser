@@ -56,7 +56,7 @@ filter s_prs {
             1 {
                 #if ($sk -contains $s) { $lvl++; $seq = 0; break }
                 $node = $node.AppendChild($doc.CreateNode("element", $s, $null))
-                $seq = if ($nm -contains $s) { 2 } elseif ($s -eq "rename") { 3 } else { 4 }
+                $seq = if ($nm -contains $s) { 2 } elseif ($s -eq "rename") { 3 } elseif ($s -eq "name") { 3 } else { 4 }
             }
             2 { $node.SetAttribute("name", $s) | Out-Null; $seq = 5 }
             3 { $node.ParentNode.SetAttribute("name", $s) | Out-Null; $seq = 4 }
@@ -68,6 +68,17 @@ filter s_prs {
         }
     }
     end { $doc }
+}
+
+# convert edif to xml
+function edif2xml($path, $encoding = "utf-8") {
+    $edif_path = (Get-Location).path + "\\" + $path + ".xml"
+    if (-not (Test-Path $edif_path)) {
+        $path = Resolve-Path $path
+        $enc = [Text.Encoding]::GetEncoding($encoding)
+        $doc = [System.IO.File]::ReadAllLines($path, $enc) | s_tok | s_prs
+        $doc.Save($edif_path)
+    }
 }
 
 # xslt transformation
@@ -83,6 +94,23 @@ function xslt($xmlPath, $xsltPath, $outPath, $col = @{}) {
     $wrt.Close()
 }
 
+# sort xml foor edif
+function sort_xml($src_path, $out_path) {
+    if (Test-Path $src_path) {
+        $xsl1_path = (Get-Location).path + "\\edif_sort.xsl"
+        $xsl2_path = (Get-Location).path + "\\_sort.tmp"
+        $tmp_path = $src_path + ".tmp"
+        "sort: ${src_path} -> ${out_path}" | Out-Host
+        xslt $src_path $xsl1_path $xsl2_path
+        xslt $src_path $xsl2_path $tmp_path
+
+        $xml = Get-Content $tmp_path
+        $doc = [xml]$xml
+        $doc.Save($out_path)
+
+    }
+}
+
 # path: ./test/test.edn
 # encoding: utf-8, shift_jis, euc-jp
 function edif2svg($path, $encoding = "utf-8") {
@@ -94,7 +122,10 @@ function edif2svg($path, $encoding = "utf-8") {
         $enc = [Text.Encoding]::GetEncoding($encoding)
         $doc = [System.IO.File]::ReadAllLines($path, $enc) | s_tok | s_prs
         $doc.Save($edif_path)
+        Copy-Item $edif_path ($edif_path + ".org")
     }
+
+    sort_xml ($edif_path + ".org") $edif_path
 
     $cmd = @("nodes", "pages", "grps")
     $cmd | ForEach-Object {
@@ -104,7 +135,7 @@ function edif2svg($path, $encoding = "utf-8") {
         xslt $edif_path $xslt_path $out_path
     }
 
-    $cmd = @("refs","svg")
+    $cmd = @("refs", "svg")
     $page_path = (Get-Location).path + "\\" + $name + "_pages.tmp"
     Get-Content $page_path | ForEach-Object {
         $page = $_
@@ -112,12 +143,13 @@ function edif2svg($path, $encoding = "utf-8") {
             $kw = $_
             $xslt_path = (Get-Location).path + "\\edif_${kw}.xsl"
             $out_path = (Get-Location).path + "\\" + $name + "_" + $page + "_${kw}.tmp"
-            xslt $edif_path $xslt_path $out_path @{page = $page }
+            "convert ${edif_path}#${page} -> ${out_path}" | Out-Host
+            xslt $edif_path $xslt_path $out_path @{ page = $page }
         }
     
         # #output schematic
         $xml = Get-Content ((Get-Location).path + "\\" + $name + "_" + $page + "_svg.tmp")
-        $doc=[xml]$xml
+        $doc = [xml]$xml
         $out_path = (Get-Location).path + "\\" + $name + "_" + $page + ".svg"
         $doc.Save($out_path)
     }
