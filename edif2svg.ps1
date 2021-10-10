@@ -29,34 +29,27 @@ filter s_prs {
         [xml]$doc = [System.Xml.XmlDocument]::new()
         $doc.AppendChild($doc.CreateXmlDeclaration("1.0", $null, $null)) | Out-Null
         $node = $doc; $seq = $lvl = 0
-        # $sk = @(
-        #     "portImplementation", "figureGroup", "figure", "status", "edifLevel")
+        $sn = @("name", "rename")
         $nm = @(
             "edif", "design", "external", "library", "cell", "view", "page", 
             "instance", "port", "portBundle", "portListAlias", "portImplementation", 
             "viewRef", "portRef", "instanceRef", "cellRef", "libraryRef", 
             "figureGroup", "figureGroupOverride", "figure", "offpageConnector",
-            # "interFigureGroupSpacing", "intraFigureGroupSpacing", 
-            # "simulate", "array", "fablicate", "notchSpace", "rectangleSize", 
-            # "logicPort", "logicValue", "notAllowed", "waveValue", 
-            # "enclosureDistance", "overhangDistance", "overlapDistance",
-            "net", "netBundle", "property", "parameter", "display"
+            "net", "netBundle", "property", "parameter", "display", "keywordDisplay"
         )
     }
     process {
         if ($_ -eq "(") { if ($lvl) { $lvl++; break } $seq = 1; break }
         if ($_ -eq ")") { if ($lvl) { $lvl--; break } $node = $node.ParentNode; $seq = 4; break }
         $s = $_
-        #$s = $_ -replace "%(\d+)%","\`$1"
         if ($s -match "%") {
             $s = [regex]::replace($s, "%(\d+)%", { [char]([int]($args.groups[1].value)) })
             $s | Out-Host
         }
         switch ($seq) {
             1 {
-                #if ($sk -contains $s) { $lvl++; $seq = 0; break }
                 $node = $node.AppendChild($doc.CreateNode("element", $s, $null))
-                $seq = if ($nm -contains $s) { 2 } elseif ($s -eq "rename") { 3 } elseif ($s -eq "name") { 3 } else { 4 }
+                $seq = if ($nm -contains $s) { 2 } elseif ($sn -contains $s) { 3 } else { 4 }
             }
             2 { $node.SetAttribute("name", $s) | Out-Null; $seq = 5 }
             3 { $node.ParentNode.SetAttribute("name", $s) | Out-Null; $seq = 4 }
@@ -68,17 +61,6 @@ filter s_prs {
         }
     }
     end { $doc }
-}
-
-# convert edif to xml
-function edif2xml($path, $encoding = "utf-8") {
-    $edif_path = (Get-Location).path + "\\" + $path + ".xml"
-    if (-not (Test-Path $edif_path)) {
-        $path = Resolve-Path $path
-        $enc = [Text.Encoding]::GetEncoding($encoding)
-        $doc = [System.IO.File]::ReadAllLines($path, $enc) | s_tok | s_prs
-        $doc.Save($edif_path)
-    }
 }
 
 # xslt transformation
@@ -94,63 +76,68 @@ function xslt($xmlPath, $xsltPath, $outPath, $col = @{}) {
     $wrt.Close()
 }
 
-# sort xml foor edif
-function sort_xml($src_path, $out_path) {
-    if (Test-Path $src_path) {
-        $xsl1_path = (Get-Location).path + "\\edif_sort.xsl"
-        $xsl2_path = (Get-Location).path + "\\_sort.tmp"
-        $tmp_path = $src_path + ".tmp"
-        "sort: ${src_path} -> ${out_path}" | Out-Host
-        xslt $src_path $xsl1_path $xsl2_path
-        xslt $src_path $xsl2_path $tmp_path
+# sort xml-file for edif
+function sort_xml($path, $out_path) {
+    if (Test-Path $path) {
+        $xsl_path = Join-Path (Get-Location).path "edif_sort.xsl"
+        xslt $path $xsl_path $out_path
+    }
+}
 
-        $xml = Get-Content $tmp_path
-        $doc = [xml]$xml
+# format xml-file
+function format_xml($path, $out_path) {
+    if (Test-Path $path) {
+        $doc = [xml](Get-Content $path)
         $doc.Save($out_path)
-
     }
 }
 
 # path: ./test/test.edn
 # encoding: utf-8, shift_jis, euc-jp
 function edif2svg($path, $encoding = "utf-8") {
-    $name = $path -replace "\.ed[nif]+$", ""
-    $edif_path = (Get-Location).path + "\\" + $path + ".xml"
+    $dirs = Split-Path $path | Convert-Path
+    $name = Split-Path $path -Leaf
+    $path = Join-Path $dirs $name
+    "in:  ${path}" |Out-Host
+    $name = $name -replace "\.ed[nif]+$", ""
+    $org_path = Join-Path $dirs "${name}.org"
+    $xml_path = Join-Path $dirs "${name}.xml"
+    $tmp_path = Join-Path $dirs "_tmp"
+    "out: ${xml_path}" |Out-Host
+
     # convert edif to xml
-    if (-not (Test-Path $edif_path)) {
-        $path = Resolve-Path $path
+    if (-not (Test-Path $org_path)) {
         $enc = [Text.Encoding]::GetEncoding($encoding)
         $doc = [System.IO.File]::ReadAllLines($path, $enc) | s_tok | s_prs
-        $doc.Save($edif_path)
-        Copy-Item $edif_path ($edif_path + ".org")
+        $doc.Save($org_path)
+    }
+    if (-not (Test-Path $xml_path)) {
+        sort_xml $org_path $tmp_path
+        format_xml $tmp_path $xml_path
     }
 
-    sort_xml ($edif_path + ".org") $edif_path
-
-    $cmd = @("nodes", "pages", "grps")
+    $cmd = @("node", "page", "group")
     $cmd | ForEach-Object {
         $kw = $_
-        $xslt_path = (Get-Location).path + "\\edif_${kw}.xsl"
-        $out_path = (Get-Location).path + "\\" + $name + "_${kw}.tmp"
-        xslt $edif_path $xslt_path $out_path
+        $xslt_path = Join-Path (Get-Location).path "edif_${kw}.xsl"
+        "xslt: ${xslt_path}" | Out-Host
+        $out_path = Join-Path $dirs "_${kw}.lst"
+        xslt $xml_path $xslt_path $out_path
     }
 
     $cmd = @("refs", "svg")
-    $page_path = (Get-Location).path + "\\" + $name + "_pages.tmp"
-    Get-Content $page_path | ForEach-Object {
+    Get-Content (Join-Path $dirs "_page.lst") | ForEach-Object {
         $page = $_
         $cmd | ForEach-Object {
             $kw = $_
-            $xslt_path = (Get-Location).path + "\\edif_${kw}.xsl"
-            $out_path = (Get-Location).path + "\\" + $name + "_" + $page + "_${kw}.tmp"
-            "convert ${edif_path}#${page} -> ${out_path}" | Out-Host
-            xslt $edif_path $xslt_path $out_path @{ page = $page }
+            $xslt_path = Join-Path (Get-Location).path "edif_${kw}.xsl"
+            $out_path = Join-Path $dirs "_${kw}_${page}.lst"
+            "convert to ${out_path}" | Out-Host
+            xslt $xml_path $xslt_path $out_path @{ page = $page }
         }
     
-        # #output schematic
-        $xml = Get-Content ((Get-Location).path + "\\" + $name + "_" + $page + "_svg.tmp")
-        $doc = [xml]$xml
-        $out_path = (Get-Location).path + "\\" + $name + "_" + $page + ".svg"
-        $doc.Save($out_path)
+        #output schematic
+        $out_path = Join-Path $dirs "${name}_${page}.svg"
+        format_xml (Join-Path $dirs "_svg_${page}.lst") $out_path
     }
 }

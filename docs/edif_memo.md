@@ -379,19 +379,9 @@ figureGroup の属性の一部を上書きした属性を適用対象にする。
 
 ## そのほか
 
-    (port ""
-        (direction INOUT/INPUT/OUTPUT)
-        (unused)
-        (portDelay ...)
-        (designator ""/(strDisplay))
-        (DcFanInLoad) (DcFanOutLoad) (DcMaxFanIn) (DcMaxFanOut) (AcLoad)
-        (Property)...
-    )
+## symbol
 
-    (portBundle ""
-        (listOfPorts (port)... (portBundle)...)
-        (Property)...
-    )
+シンボルの図
 
     (symbol
         (portimplementation)
@@ -407,17 +397,25 @@ figureGroup の属性の一部を上書きした属性を適用対象にする。
         (Property)
     )
 
-    (protectionFrame
-        (portImplementation)...
-        (figure)
-        (instance)
-        (commentGraphics)
-        (boundBox)
-        (PropDisp) 
-        (KeywordDisplay) 
-        (parameterDisplay [nameRef] (display)) 
-        (Property)
+## port
+
+ポートの定義
+
+    (port ""
+        (direction INOUT/INPUT/OUTPUT)
+        (unused)
+        (portDelay ...)
+        (designator ""/(strDisplay))
+        (DcFanInLoad) (DcFanOutLoad) (DcMaxFanIn) (DcMaxFanOut) (AcLoad)
+        (Property)...
     )
+
+    (portBundle ""
+        (listOfPorts (port)... (portBundle)...)
+        (Property)...
+    )
+
+ポートの実装
 
     (portImplementation
         (Name)/[Ident]
@@ -427,6 +425,20 @@ figureGroup の属性の一部を上書きした属性を適用対象にする。
         (commentGraphics)
         (propertyDisplay)
         (KeywordDisplay)
+        (Property)
+    )
+
+
+
+    (protectionFrame
+        (portImplementation)...
+        (figure)
+        (instance)
+        (commentGraphics)
+        (boundBox)
+        (PropDisp) 
+        (KeywordDisplay) 
+        (parameterDisplay [nameRef] (display)) 
         (Property)
     )
 

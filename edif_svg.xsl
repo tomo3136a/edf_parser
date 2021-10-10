@@ -11,9 +11,9 @@
     -->
     <xsl:variable name="lowercase" select="'abcdefghijklmnopqrstuvwxyz'" />
     <xsl:variable name="uppercase" select="'ABCDEFGHIJKLMNOPQRSTUVWXYZ'" />
-    <xsl:key name="fgl" match="//figureGroup" use="translate(
+    <!-- <xsl:key name="fgl" match="//figureGroup" use="translate(
         concat(../../@name,'-',@name),
-        'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ')"/>
+        'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ')"/> -->
     <xsl:key name="vwl" match="//view" use="translate(
         concat(../../@name,'-',../@name,'-',@name),
         'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ')"/>
@@ -24,30 +24,24 @@
     </xsl:template>
     <xsl:template match="edif">
         <svg xmlns="http://www.w3.org/2000/svg"
-            xmlns:xlink="http://www.w3.org/1999/xlink"
-            xmlns:ev="http://www.w3.org/2001/xml-events">
+            xmlns:xlink="http://www.w3.org/1999/xlink">
             <xsl:attribute name="style">
-                <xsl:text>background: #0ee</xsl:text>
+                <xsl:text>background: #444</xsl:text>
             </xsl:attribute>
-            <xsl:for-each select="library">
-                <xsl:call-template name="_viewBox"/>
+            <xsl:variable name="cell_ref" select="design/cellRef/@name"/>
+            <xsl:variable name="library_ref" select="design/cellRef/libraryRef/@name"/>
+            <xsl:for-each select="library[@name=$library_ref]/cell[@name=$cell_ref]">
+                <xsl:for-each select=".//page[@name=$page]">
+                    <xsl:call-template name="_viewBox"/>
+                </xsl:for-each>
             </xsl:for-each>
-        <rect fill="#088">
-            <xsl:attribute name="x">
-                <xsl:call-template name="_pt_xs"/>
-            </xsl:attribute>
-            <xsl:attribute name="y">
-                <xsl:call-template name="_pt_ys"/>
-            </xsl:attribute>
-            <xsl:attribute name="width">
-                <xsl:call-template name="_pt_dx"/>
-            </xsl:attribute>
-            <xsl:attribute name="height">
-                <xsl:call-template name="_pt_dy"/>
-            </xsl:attribute>
-        </rect>
-            <xsl:apply-templates select="external"/>
-            <xsl:apply-templates select="library"/>
+            <xsl:for-each select="library[@name=$library_ref]/cell[@name=$cell_ref]">
+                <xsl:for-each select=".//page[@name=$page]">
+                    <xsl:call-template name="_sheet"/>
+                </xsl:for-each>
+            </xsl:for-each>
+            <xsl:apply-templates select="external[@name=$library_ref]"/>
+            <xsl:apply-templates select="library[@name=$library_ref]"/>
             <xsl:apply-templates select="design"/>
         </svg>
     </xsl:template>
@@ -62,6 +56,109 @@
             <xsl:text>,</xsl:text>
             <xsl:call-template name="_pt_dy"/>
         </xsl:attribute>
+    </xsl:template>
+
+    <xsl:template name="_sheet">
+        <rect fill="#fff">
+            <xsl:attribute name="x">
+                <xsl:call-template name="_pt_xs"/>
+            </xsl:attribute>
+            <xsl:attribute name="y">
+                <xsl:call-template name="_pt_ys"/>
+            </xsl:attribute>
+            <xsl:attribute name="width">
+                <xsl:call-template name="_pt_dx"/>
+            </xsl:attribute>
+            <xsl:attribute name="height">
+                <xsl:call-template name="_pt_dy"/>
+            </xsl:attribute>
+        </rect>
+    </xsl:template>
+
+    <xsl:template name="_pt_xs">
+        <xsl:param name="d" select="10"/>
+        <xsl:for-each select=".//pt">
+            <xsl:sort select="substring-before(.,' ')" data-type="number"/>
+            <xsl:if test="position()=1">
+                <xsl:value-of select="0+substring-before(.,' ')-$d"/>
+            </xsl:if>
+        </xsl:for-each>
+    </xsl:template>
+
+    <xsl:template name="_pt_xe">
+        <xsl:param name="d" select="10"/>
+        <xsl:for-each select=".//pt">
+            <xsl:sort select="substring-before(.,' ')" data-type="number" order="descending"/>
+            <xsl:if test="position()=1">
+                <xsl:value-of select="0+substring-before(.,' ')+$d"/>
+            </xsl:if>
+        </xsl:for-each>
+    </xsl:template>
+
+    <xsl:template name="_pt_dx">
+        <xsl:param name="d" select="10"/>
+        <xsl:call-template name="_pt_d">
+            <xsl:with-param name="s">
+                <xsl:call-template name="_pt_xs">
+                    <xsl:with-param name="d">
+                        <xsl:value-of select="$d"/>
+                    </xsl:with-param>
+                </xsl:call-template>
+            </xsl:with-param>
+            <xsl:with-param name="e">
+                <xsl:call-template name="_pt_xe">
+                    <xsl:with-param name="d">
+                        <xsl:value-of select="$d"/>
+                    </xsl:with-param>
+                </xsl:call-template>
+            </xsl:with-param>
+        </xsl:call-template>
+    </xsl:template>
+
+    <xsl:template name="_pt_ys">
+        <xsl:param name="d" select="10"/>
+        <xsl:for-each select=".//pt">
+            <xsl:sort select="-substring-after(.,' ')" data-type="number"/>
+            <xsl:if test="position()=1">
+                <xsl:value-of select="0-substring-after(.,' ')-$d"/>
+            </xsl:if>
+        </xsl:for-each>
+    </xsl:template>
+
+    <xsl:template name="_pt_ye">
+        <xsl:param name="d" select="10"/>
+        <xsl:for-each select=".//pt">
+            <xsl:sort select="-substring-after(.,' ')" data-type="number" order="descending"/>
+            <xsl:if test="position()=1">
+                <xsl:value-of select="0-substring-after(.,' ')+$d"/>
+            </xsl:if>
+        </xsl:for-each>
+    </xsl:template>
+
+    <xsl:template name="_pt_dy">
+        <xsl:param name="d" select="10"/>
+        <xsl:call-template name="_pt_d">
+            <xsl:with-param name="s">
+                <xsl:call-template name="_pt_ys">
+                    <xsl:with-param name="d">
+                        <xsl:value-of select="$d"/>
+                    </xsl:with-param>
+                </xsl:call-template>
+            </xsl:with-param>
+            <xsl:with-param name="e">
+                <xsl:call-template name="_pt_ye">
+                    <xsl:with-param name="d">
+                        <xsl:value-of select="$d"/>
+                    </xsl:with-param>
+                </xsl:call-template>
+            </xsl:with-param>
+        </xsl:call-template>
+    </xsl:template>
+
+    <xsl:template name="_pt_d">
+        <xsl:param name="s" select="0"/>
+        <xsl:param name="e" select="0"/>
+        <xsl:value-of select="0-$s+$e"/>
     </xsl:template>
 
     <!--design-->
@@ -410,92 +507,6 @@
         </xsl:if>
     </xsl:template>
 
-    <xsl:template name="_pt_xs">
-        <xsl:param name="d" select="5"/>
-        <xsl:for-each select=".//pt">
-            <xsl:sort select="number(substring-before(text(),' '))" data-type="number"/>
-            <xsl:if test="position()=1">
-                <xsl:value-of select="0+number(substring-before(text(),' '))-$d"/>
-            </xsl:if>
-        </xsl:for-each>
-    </xsl:template>
-
-    <xsl:template name="_pt_xe">
-        <xsl:param name="d" select="5"/>
-        <xsl:for-each select=".//pt">
-            <xsl:sort select="substring-before(text(),' ')" data-type="number" order="descending"/>
-            <xsl:if test="position()=1">
-                <xsl:value-of select="0+substring-before(text(),' ')+$d"/>
-            </xsl:if>
-        </xsl:for-each>
-    </xsl:template>
-
-    <xsl:template name="_pt_dx">
-        <xsl:param name="d" select="5"/>
-        <xsl:call-template name="_pt_d">
-            <xsl:with-param name="s">
-                <xsl:call-template name="_pt_xs">
-                    <xsl:with-param name="d">
-                        <xsl:value-of select="$d"/>
-                    </xsl:with-param>
-                </xsl:call-template>
-            </xsl:with-param>
-            <xsl:with-param name="e">
-                <xsl:call-template name="_pt_xe">
-                    <xsl:with-param name="d">
-                        <xsl:value-of select="$d"/>
-                    </xsl:with-param>
-                </xsl:call-template>
-            </xsl:with-param>
-        </xsl:call-template>
-    </xsl:template>
-
-    <xsl:template name="_pt_ys">
-        <xsl:param name="d" select="5"/>
-        <xsl:for-each select=".//pt">
-            <xsl:sort select="-substring-after(.,' ')" data-type="number"/>
-            <xsl:if test="position()=1">
-                <xsl:value-of select="0-substring-after(.,' ')-$d"/>
-            </xsl:if>
-        </xsl:for-each>
-    </xsl:template>
-
-    <xsl:template name="_pt_ye">
-        <xsl:param name="d" select="5"/>
-        <xsl:for-each select=".//pt">
-            <xsl:sort select="-substring-after(.,' ')" data-type="number" order="descending"/>
-            <xsl:if test="position()=1">
-                <xsl:value-of select="0-substring-after(.,' ')+$d"/>
-            </xsl:if>
-        </xsl:for-each>
-    </xsl:template>
-
-    <xsl:template name="_pt_dy">
-        <xsl:param name="d" select="5"/>
-        <xsl:call-template name="_pt_d">
-            <xsl:with-param name="s">
-                <xsl:call-template name="_pt_ys">
-                    <xsl:with-param name="d">
-                        <xsl:value-of select="$d"/>
-                    </xsl:with-param>
-                </xsl:call-template>
-            </xsl:with-param>
-            <xsl:with-param name="e">
-                <xsl:call-template name="_pt_ye">
-                    <xsl:with-param name="d">
-                        <xsl:value-of select="$d"/>
-                    </xsl:with-param>
-                </xsl:call-template>
-            </xsl:with-param>
-        </xsl:call-template>
-    </xsl:template>
-
-    <xsl:template name="_pt_d">
-        <xsl:param name="s" select="0"/>
-        <xsl:param name="e" select="0"/>
-        <xsl:value-of select="0-$s+$e"/>
-    </xsl:template>
-
     <!--vispble/textHeight-->
     <xsl:template name="_style">
         <xsl:call-template name="_lineStyle"/>
@@ -606,7 +617,7 @@
             <xsl:if test="not (count(figureGroupOverride)=0)">
                 <xsl:apply-templates select="figureGroupOverride"/>
             </xsl:if>
-            <xsl:apply-templates select="./*"/>
+            <xsl:apply-templates select="./*[not(name()='figureGroupOverride')]"/>
         </g>
     </xsl:template>
 

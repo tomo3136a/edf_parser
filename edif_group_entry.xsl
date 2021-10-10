@@ -42,7 +42,7 @@
 
         <!--figureGroup contents-->
         <xsl:for-each select="(library|external)[@name=$library_ref]/technology">
-            <xsl:message>
+            <!-- <xsl:message>
                 <xsl:text>figureGroup-list:&#10;</xsl:text>
                 <xsl:for-each select="figureGroup">
                     <xsl:value-of select="@name" disable-output-escaping="yes"/>
@@ -50,7 +50,7 @@
                     <xsl:copy-of select="./node()"/>
                     <xsl:text>&#10;</xsl:text>
                 </xsl:for-each>
-            </xsl:message>
+            </xsl:message> -->
         </xsl:for-each>
 
     </xsl:template>
