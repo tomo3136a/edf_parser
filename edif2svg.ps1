@@ -79,7 +79,8 @@ function xslt($xmlPath, $xsltPath, $outPath, $col = @{}) {
 # sort xml-file for edif
 function sort_xml($path, $out_path) {
     if (Test-Path $path) {
-        $xsl_path = Join-Path (Get-Location).path "edif_sort.xsl"
+        $xsl_path = Join-Path (Get-Location).path "xsl"
+        $xsl_path = Join-Path $xsl_path "edif_sort.xsl"
         xslt $path $xsl_path $out_path
     }
 }
@@ -105,6 +106,8 @@ function edif2svg($path, $encoding = "utf-8") {
     $tmp_path = Join-Path $dirs "_tmp"
     "out: ${xml_path}" |Out-Host
 
+    $xsl_dirs = Join-Path (Get-Location).path "xsl"
+
     # convert edif to xml
     if (-not (Test-Path $org_path)) {
         $enc = [Text.Encoding]::GetEncoding($encoding)
@@ -119,7 +122,7 @@ function edif2svg($path, $encoding = "utf-8") {
     $cmd = @("node", "page", "group")
     $cmd | ForEach-Object {
         $kw = $_
-        $xslt_path = Join-Path (Get-Location).path "edif_${kw}.xsl"
+        $xslt_path = Join-Path $xsl_dirs "edif_${kw}.xsl"
         "xslt: ${xslt_path}" | Out-Host
         $out_path = Join-Path $dirs "_${kw}.lst"
         xslt $xml_path $xslt_path $out_path
@@ -130,7 +133,7 @@ function edif2svg($path, $encoding = "utf-8") {
         $page = $_
         $cmd | ForEach-Object {
             $kw = $_
-            $xslt_path = Join-Path (Get-Location).path "edif_${kw}.xsl"
+            $xslt_path = Join-Path $xsl_dirs "edif_${kw}.xsl"
             $out_path = Join-Path $dirs "_${kw}_${page}.lst"
             "convert to ${out_path}" | Out-Host
             xslt $xml_path $xslt_path $out_path @{ page = $page }
