@@ -25,18 +25,11 @@ filter s_tok {
 
 # s-expression parse
 filter s_prs {
+    param($sn = @(), $nm = @())
     begin {
         [xml]$doc = [System.Xml.XmlDocument]::new()
         $doc.AppendChild($doc.CreateXmlDeclaration("1.0", $null, $null)) | Out-Null
         $node = $doc; $seq = $lvl = 0
-        $sn = @("name", "rename")
-        $nm = @(
-            "edif", "design", "external", "library", "cell", "view", "page", 
-            "instance", "port", "portBundle", "portListAlias", "portImplementation", 
-            "viewRef", "portRef", "instanceRef", "cellRef", "libraryRef", 
-            "figureGroup", "figureGroupOverride", "figure", "offpageConnector",
-            "net", "netBundle", "property", "parameter", "display", "keywordDisplay"
-        )
     }
     process {
         if ($_ -eq "(") { if ($lvl) { $lvl++; break } $seq = 1; break }
@@ -63,6 +56,31 @@ filter s_prs {
     end { $doc }
 }
 
+# convert edif to xml
+function edif2xml($path, $out_path, $encoding = "utf-8") {
+    if (-not (Test-Path $out_path)) {
+        $enc = [Text.Encoding]::GetEncoding($encoding)
+        $sn = @("name", "rename")
+        $nm = @(
+            "edif", "design", "external", "library", "cell", "view", "page", 
+            "instance", "port", "portBundle", "portListAlias", "portImplementation", 
+            "viewRef", "portRef", "instanceRef", "cellRef", "libraryRef", 
+            "figureGroup", "figureGroupOverride", "figure", "offpageConnector",
+            "net", "netBundle", "property", "parameter", "display", "keywordDisplay"
+        )
+        $doc = [System.IO.File]::ReadAllLines($path, $enc) | s_tok | s_prs $sn $nm
+        $doc.Save($out_path)
+    }
+}
+
+# format xml-file
+function format_xml($path, $out_path) {
+    if (Test-Path $path) {
+        $doc = [xml](Get-Content $path)
+        $doc.Save($out_path)
+    }
+}
+
 # xslt transformation
 function xslt($xmlPath, $xsltPath, $outPath, $col = @{}) {
     $xslt = New-Object System.Xml.Xsl.XslCompiledTransform
@@ -80,46 +98,37 @@ function xslt($xmlPath, $xsltPath, $outPath, $col = @{}) {
 function sort_xml($path, $out_path) {
     if (Test-Path $path) {
         $xsl_path = Join-Path (Get-Location).path "xsl"
-        $xsl_path = Join-Path $xsl_path "edif_sort.xsl"
+        $xsl_path = Join-Path $xsl_path "xml_sort.xsl"
         xslt $path $xsl_path $out_path
-    }
-}
-
-# format xml-file
-function format_xml($path, $out_path) {
-    if (Test-Path $path) {
-        $doc = [xml](Get-Content $path)
-        $doc.Save($out_path)
     }
 }
 
 # path: ./test/test.edn
 # encoding: utf-8, shift_jis, euc-jp
 function edif2svg($path, $encoding = "utf-8") {
+    $xsl_dirs = Join-Path (Get-Location).path "xsl"
+
     $dirs = Split-Path $path | Convert-Path
     $name = Split-Path $path -Leaf
     $path = Join-Path $dirs $name
-    "in:  ${path}" |Out-Host
+    "in:  ${path}" | Out-Host
     $name = $name -replace "\.ed[nif]+$", ""
     $org_path = Join-Path $dirs "${name}.org"
     $xml_path = Join-Path $dirs "${name}.xml"
     $tmp_path = Join-Path $dirs "_tmp"
-    "out: ${xml_path}" |Out-Host
-
-    $xsl_dirs = Join-Path (Get-Location).path "xsl"
+    "out: ${xml_path}" | Out-Host
 
     # convert edif to xml
     if (-not (Test-Path $org_path)) {
-        $enc = [Text.Encoding]::GetEncoding($encoding)
-        $doc = [System.IO.File]::ReadAllLines($path, $enc) | s_tok | s_prs
-        $doc.Save($org_path)
+        edif2xml $path $org_path $encoding
     }
     if (-not (Test-Path $xml_path)) {
         sort_xml $org_path $tmp_path
         format_xml $tmp_path $xml_path
+        Remove-Item $tmp_path
     }
 
-    $cmd = @("node", "page", "group")
+    $cmd = @("node", "id", "page", "group")
     $cmd | ForEach-Object {
         $kw = $_
         $xslt_path = Join-Path $xsl_dirs "edif_${kw}.xsl"
@@ -133,7 +142,7 @@ function edif2svg($path, $encoding = "utf-8") {
         $page = $_
         $cmd | ForEach-Object {
             $kw = $_
-            $xslt_path = Join-Path $xsl_dirs "edif_${kw}.xsl"
+            $xslt_path = Join-Path $xsl_dirs "page_${kw}.xsl"
             $out_path = Join-Path $dirs "_${kw}_${page}.lst"
             "convert to ${out_path}" | Out-Host
             xslt $xml_path $xslt_path $out_path @{ page = $page }
