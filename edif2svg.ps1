@@ -63,7 +63,8 @@ function edif2xml($path, $out_path, $encoding = "utf-8") {
         $sn = @("name", "rename")
         $nm = @(
             "edif", "design", "external", "library", "cell", "view", "page", 
-            "instance", "port", "portBundle", "portListAlias", "portImplementation", 
+            "instance", "portInstance", "port", "portBundle", "portListAlias", 
+            "portImplementation", 
             "viewRef", "portRef", "instanceRef", "cellRef", "libraryRef", 
             "figureGroup", "figureGroupOverride", "figure", "offpageConnector",
             "net", "netBundle", "property", "parameter", "display", "keywordDisplay"
@@ -128,7 +129,7 @@ function edif2svg($path, $encoding = "utf-8") {
         Remove-Item $tmp_path
     }
 
-    $cmd = @("node", "id", "page", "group")
+    $cmd = @("node", "id", "page", "group", "info")
     $cmd | ForEach-Object {
         $kw = $_
         $xslt_path = Join-Path $xsl_dirs "edif_${kw}.xsl"
