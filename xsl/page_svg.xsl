@@ -5,27 +5,28 @@
     <xsl:output method="xml" media-type="text/xsl" indent="yes"/>
     <xsl:param name="page"/>
 
+    <!--global-->
+    <!-- <xsl:variable name="lowercase" select="'abcdefghijklmnopqrstuvwxyz'" /> -->
+    <!-- <xsl:variable name="uppercase" select="'ABCDEFGHIJKLMNOPQRSTUVWXYZ'" /> -->
+
     <!--keys
+        fgl: figureGroup list   libraryName-figureGroupName
         vwl: view list          libraryName-cellName-viewName
     -->
-    <xsl:variable name="lowercase" select="'abcdefghijklmnopqrstuvwxyz'" />
-    <xsl:variable name="uppercase" select="'ABCDEFGHIJKLMNOPQRSTUVWXYZ'" />
-    <xsl:key name="fgl" match="//figureGroup" use="translate(
-        concat(../../@name,'-',@name),
-        'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ')"/>
-    <xsl:key name="vwl" match="//view" use="translate(
-        concat(../../@name,'-',../@name,'-',@name),
-        'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ')"/>
+    <xsl:key name="fgl" match="//figureGroup" use="concat(../../@name,'-',@name)"/>
+    <xsl:key name="vwl" match="//view" use="concat(../../@name,'-',../@name,'-',@name)"/>
 
     <!--root/edif-->
     <xsl:template match="/">
         <xsl:apply-templates select="edif"/>
     </xsl:template>
+
     <xsl:template match="edif">
         <xsl:variable name="cell_ref" select="design/cellRef/@name"/>
         <xsl:variable name="library_ref" select="design/cellRef/libraryRef/@name"/>
         <svg xmlns="http://www.w3.org/2000/svg"
             xmlns:xlink="http://www.w3.org/1999/xlink">
+            <!--artrubute-->
             <xsl:attribute name="style">
                 <xsl:text>background: #444</xsl:text>
             </xsl:attribute>
@@ -34,6 +35,7 @@
                     <xsl:call-template name="_viewBox"/>
                 </xsl:for-each>
             </xsl:for-each>
+            <!--contents-->
             <xsl:for-each select="library[@name=$library_ref]/cell[@name=$cell_ref]">
                 <xsl:for-each select=".//page[@name=$page]">
                     <xsl:call-template name="_sheet"/>
@@ -42,7 +44,7 @@
                     <xsl:variable name="id" select="concat($library_ref,'-',$cell_ref,'-',@name)"/>
                     <g stroke="black" stroke-width="1" fill="none" id="{$id}">
                         <xsl:for-each select="contents/page[@name=$page]">
-                            <xsl:call-template name="_contents"/>
+                            <xsl:call-template name="_contents_page"/>
                         </xsl:for-each>
                     </g>
                 </xsl:for-each>
@@ -135,24 +137,12 @@
         </xsl:if>
     </xsl:template>
 
-    <!--library/external/cell/view-->
+    <!--library/external/technology/figureGroup/cell/view-->
     <xsl:template match="library|external">
         <xsl:apply-templates select="technology"/>
         <xsl:apply-templates select="cell"/>
     </xsl:template>
 
-    <xsl:template match="cell">
-        <xsl:apply-templates select="view"/>
-    </xsl:template>
-
-    <xsl:template match="view">
-        <xsl:variable name="id" select="concat(../../@name,'-',../@name,'-',@name)"/>
-        <xsl:apply-templates select="interface"/>
-        <xsl:apply-templates select="contents"/>
-        <xsl:apply-templates select="property"/>
-    </xsl:template>
-
-    <!--technology/figureGroup-->
     <xsl:template match="technology">
         <xsl:apply-templates select="figureGroup"/>
     </xsl:template>
@@ -160,13 +150,24 @@
     <xsl:template match="figureGroup">
     </xsl:template>
 
+    <xsl:template match="cell">
+        <xsl:apply-templates select="view"/>
+    </xsl:template>
+
+    <xsl:template match="view">
+        <xsl:apply-templates select="interface"/>
+        <xsl:apply-templates select="contents"/>
+        <xsl:apply-templates select="property"/>
+    </xsl:template>
+
     <!--interface-->
     <xsl:template match="interface">
         <xsl:apply-templates select="protectionFrame"/>
         <xsl:apply-templates select="symbol"/>
         <xsl:apply-templates select="port"/>
-        <xsl:apply-templates select="designator"/>
         <xsl:apply-templates select="name"/>
+        <xsl:apply-templates select="designator"/>
+        <xsl:apply-templates select="parameter"/>
         <xsl:apply-templates select="property"/>
     </xsl:template>
 
@@ -174,34 +175,27 @@
         <xsl:apply-templates select="portImplementation"/>
         <xsl:apply-templates select="figure"/>
         <xsl:apply-templates select="instance"/>
-        <xsl:apply-templates select="commentGraphics"/>
         <xsl:apply-templates select="boundingBox"/>
+        <xsl:apply-templates select="commentGraphics"/>
+        <xsl:apply-templates select="parameterDisplay"/>
         <xsl:apply-templates select="propertyDisplay"/>
         <xsl:apply-templates select="keywordDisplay"/>
-        <xsl:apply-templates select="parameterDisplay"/>
-        <xsl:apply-templates select="property"/>
-    </xsl:template>
-
-    <!--port-->
-    <xsl:template match="port">
-        <xsl:apply-templates select="figure"/>
-        <xsl:apply-templates select="designator"/>
         <xsl:apply-templates select="property"/>
     </xsl:template>
 
     <!--symbol-->
     <xsl:template match="symbol">
-        <xsl:call-template name="_border"/>
-        <xsl:apply-templates select="boundingBox"/>
-        <xsl:apply-templates select="pageSize"/>
-        <xsl:apply-templates select="figure"/>
-        <xsl:apply-templates select="instance"/>
-        <xsl:apply-templates select="portImplementation"/>
-        <xsl:apply-templates select="commentGraphics"/>
+        <xsl:call-template name="_sc_common"/>
         <xsl:apply-templates select="annotate"/>
-        <xsl:apply-templates select="keywordDisplay"/>
-        <xsl:apply-templates select="propertyDisplay"/>
         <xsl:apply-templates select="parameterDisplay"/>
+        <xsl:apply-templates select="propertyDisplay"/>
+        <xsl:apply-templates select="keywordDisplay"/>
+        <xsl:apply-templates select="property"/>
+    </xsl:template>
+
+    <!--port-->
+    <xsl:template match="port">
+        <xsl:apply-templates select="designator"/>
         <xsl:apply-templates select="property"/>
     </xsl:template>
 
@@ -221,27 +215,33 @@
 
     <!--contents-->
     <xsl:template match="contents">
-        <xsl:call-template name="_contents"/>
+        <xsl:call-template name="_contents_page"/>
         <xsl:for-each select="page[@name=$page]">
-            <xsl:call-template name="_contents"/>
+            <xsl:call-template name="_contents_page"/>
         </xsl:for-each>
     </xsl:template>
 
-    <xsl:template name="_contents">
-        <xsl:apply-templates select="boundingBox"/>
-        <xsl:apply-templates select="pageSize"/>
-        <xsl:apply-templates select="figure"/>
-        <xsl:apply-templates select="instance"/>
-        <xsl:apply-templates select="portImplementation"/>
-        <xsl:apply-templates select="commentGraphics"/>
+    <xsl:template name="_contents_page">
+        <xsl:call-template name="_sc_common"/>
         <xsl:apply-templates select="net"/>
         <xsl:apply-templates select="offPageConnector"/>
     </xsl:template>
-    <xsl:template match="pageSize">
-        <xsl:apply-templates select="rectangle"/>
+
+    <!--symbol/contents common-->
+    <xsl:template name="_sc_common">
+        <xsl:apply-templates select="boundingBox"/>
+        <xsl:apply-templates select="pageSize"/>
+        <xsl:apply-templates select="commentGraphics"/>
+        <xsl:apply-templates select="figure"/>
+        <xsl:apply-templates select="instance"/>
+        <xsl:apply-templates select="portImplementation"/>
     </xsl:template>
 
     <xsl:template match="boundingBox">
+        <xsl:apply-templates select="rectangle"/>
+    </xsl:template>
+
+    <xsl:template match="pageSize">
         <xsl:apply-templates select="rectangle"/>
     </xsl:template>
 
@@ -252,101 +252,125 @@
         <xsl:apply-templates select="annotate"/>
         <xsl:apply-templates select="property"/>
     </xsl:template>
+
     <xsl:template match="designator">
-        <xsl:apply-templates select="stringDisplay"/>
+        <xsl:if test="count(ancestor::contents)!=0">
+            <xsl:apply-templates select="stringDisplay"/>
+        </xsl:if>
     </xsl:template>
+
     <xsl:template match="annotate">
         <xsl:apply-templates select="stringDisplay"/>
     </xsl:template>
+
     <xsl:template match="property">
         <xsl:apply-templates select="string|integer|number"/>
     </xsl:template>
+
     <xsl:template match="string">
         <xsl:apply-templates select="stringDisplay"/>
     </xsl:template>
+
     <xsl:template match="integer">
         <xsl:apply-templates select="integerDisplay"/>
     </xsl:template>
+
     <xsl:template match="number">
         <xsl:apply-templates select="numberDisplay"/>
     </xsl:template>
 
     <!--instance-->
+    <!-- <xsl:variable name="kw">
+        <xsl:call-template name="_viewref_name"/>
+    </xsl:variable>
+    <xsl:variable name="vw" select="key('vwl',$kw)"/> -->
     <xsl:template match="instance">
         <g>
             <xsl:for-each select="transform">
                 <xsl:call-template name="_transform_figure"/>
             </xsl:for-each>
-            <!-- <xsl:call-template name="_transform_figure_debug"/> -->
+            <xsl:call-template name="_transform_figure_debug"/>
             <xsl:call-template name="_instance_viewref"/>
         </g>
-        <!-- <xsl:apply-templates select="portInstance"/> -->
-        <!-- <xsl:apply-templates select="parameterAssign"/> -->
-        <!-- <xsl:apply-templates select="designator"/> -->
-        <!-- <xsl:apply-templates select="property"/> -->
+        <xsl:apply-templates select="portInstance"/>
+        <xsl:apply-templates select="parameterAssign"/>
+        <xsl:apply-templates select="designator"/>
+        <xsl:apply-templates select="property"/>
     </xsl:template>
 
     <xsl:template name="_transform_figure_debug">
-        <xsl:variable name="x" select="0+substring-before(.//origin/pt,' ')"/>
-        <xsl:variable name="y" select="0-substring-after(.//origin/pt,' ')"/>
-        <xsl:variable name="a" select=".//orientation/text()"/>
+        <xsl:variable name="x" select="0+substring-before(transform/origin/pt,' ')"/>
+        <xsl:variable name="y" select="0-substring-after(transform/origin/pt,' ')"/>
+        <xsl:variable name="a" select="transform/orientation/text()"/>
         <text x="0" y="0" font-size="6" fill="red" stroke-width="0">
-            <xsl:value-of select="concat(../../@name,'-',../@name,': ',$x,',',$y,',',$a)"/>
+            <xsl:value-of select="$a"/>
         </text>
         <circle r="1" fill="#0" stroke="red" stroke-width="1" cx="0" cy="0"/>
     </xsl:template>
-
 
     <xsl:template match="parameterAssign">
     </xsl:template>
 
     <xsl:template name="_instance_viewref">
-        <xsl:for-each select="viewRef">
-            <xsl:call-template name="_viewref_call">
-                <xsl:with-param name="kw">
-                    <xsl:call-template name="_viewref_name"/>
-                </xsl:with-param>
-            </xsl:call-template>
-        </xsl:for-each>
+        <xsl:if test="count(viewRef)!=0">
+            <xsl:variable name="kw">
+                <xsl:call-template name="_viewref_name"/>
+            </xsl:variable>
+            <xsl:apply-templates select="key('vwl',$kw)">
+            </xsl:apply-templates>
+        </xsl:if>
         <xsl:for-each select="viewList">
             <xsl:call-template name="_instance_viewref"/>
         </xsl:for-each>
     </xsl:template>
 
     <xsl:template name="_viewref_name">
-        <xsl:if test="not (count(cellRef/libraryRef)=0)">
-            <xsl:value-of select="cellRef/libraryRef/@name"/>
-        </xsl:if>
-        <xsl:if test="count(cellRef/libraryRef)=0">
+        <xsl:variable name="viewRef" select="viewRef/@name"/>
+        <xsl:variable name="cellRef" select="viewRef/cellRef/@name"/>
+        <xsl:variable name="libraryRef" select="viewRef/cellRef/libraryRef/@name"/>
+        <xsl:value-of select="$libraryRef"/>
+        <xsl:if test="libraryRef=''">
             <xsl:value-of select="ancestor::node()/library/@name"/>
         </xsl:if>
         <xsl:text>-</xsl:text>
-        <xsl:if test="not (count(cellRef)=0)">
-            <xsl:value-of select="cellRef/@name"/>
-        </xsl:if>
-        <xsl:if test="count(cellRef)=0">
+        <xsl:value-of select="$cellRef"/>
+        <xsl:if test="cellRef=''">
             <xsl:value-of select="ancestor::node()/cell/@name"/>
         </xsl:if>
         <xsl:text>-</xsl:text>
-        <xsl:value-of select="@name"/>
+        <xsl:value-of select="$viewRef"/>
+        <xsl:if test="viewRef=''">
+            <xsl:value-of select="ancestor::node()/view/@name"/>
+        </xsl:if>
     </xsl:template>
 
-    <xsl:template name="_viewref_call">
+    <!-- <xsl:template name="_viewref_call">
         <xsl:param name="kw"/>
-        <xsl:apply-templates select="key('vwl',translate($kw,$lowercase,$uppercase))">
+        <xsl:apply-templates select="key('vwl',$kw)">
         </xsl:apply-templates>
-    </xsl:template>
+    </xsl:template> -->
 
     <!--view_name-->
     <xsl:template name="_view_name">
-        <xsl:variable name="view_ref" select="@name"/>
+        <xsl:variable name="view_ref" select="viewRef/@name"/>
         <xsl:variable name="cell_ref" select="cellRef/@name"/>
         <xsl:variable name="library_ref" select="cellRef/libraryRef/@name"/>
-        <xsl:value-of select="translate(concat($library_ref,'-',$cell_ref,'-',$view_ref),$lowercase,$uppercase)"/>
+        <xsl:value-of select="concat($library_ref,'-',$cell_ref,'-',$view_ref)"/>
     </xsl:template>
 
     <!--portInstance-->
     <xsl:template match="portInstance">
+        <!-- <g>
+            <xsl:for-each select="transform">
+                <xsl:call-template name="_transform_figure"/>
+            </xsl:for-each>
+            <xsl:call-template name="_instance_viewref"/>
+        </g> -->
+        <!-- <xsl:apply-templates select="designator"/> -->
+        <!-- <xsl:apply-templates select="property"/> -->
+
+
+
         <!-- <xsl:variable name="name" select="@name"/>
         <xsl:variable name="ref">
             <xsl:for-each select="../viewRef[1]">
@@ -382,6 +406,7 @@
     <!--net-->
     <xsl:template match="net">
         <g stroke="black" stroke-width="1" id="{@name}">
+            <xsl:call-template name="_border"/>
             <!--joined-->
             <!--criticary-->
             <!--netDelay-->
@@ -404,7 +429,7 @@
     <xsl:template match="figure">
         <xsl:variable name="fg" select="concat(ancestor::library/@name,'-',@name)"/>
         <g>
-            <xsl:for-each select="key('fgl', translate($fg,$lowercase,$uppercase))">
+            <xsl:for-each select="key('fgl',$fg)">
                 <xsl:call-template name="_fg_lineStyle"/>
                 <xsl:call-template name="_fg_penType"/>
                 <xsl:call-template name="_fg_visible"/>
@@ -510,42 +535,50 @@
     </xsl:template>
 
     <xsl:template name="_transform_figure">
-        <xsl:param name="x" select="0+substring-before(origin/pt,' ')"/>
-        <xsl:param name="y" select="0-substring-after(origin/pt,' ')"/>
-        <xsl:param name="a" select="orientation/text()"/>
         <xsl:variable name="t">
-            <xsl:if test="not (count(origin)=0)">
-                <xsl:text>translate(</xsl:text>
-                <xsl:value-of select="$x"/>
-                <xsl:text>,</xsl:text>
-                <xsl:value-of select="$y"/>
-                <xsl:text>)</xsl:text>
-            </xsl:if>
-            <xsl:if test="not (count(orientation)=0)">
-                <xsl:if test="contains($a,'R0')">
-                    <xsl:text>rotate(0)</xsl:text>
-                </xsl:if>
-                <xsl:if test="contains($a,'R90')">
-                    <xsl:text>rotate(270)</xsl:text>
-                </xsl:if>
-                <xsl:if test="contains($a,'R180')">
-                    <xsl:text>rotate(180)</xsl:text>
-                </xsl:if>
-                <xsl:if test="contains($a,'R270')">
-                    <xsl:text>rotate(90)</xsl:text>
-                </xsl:if>
-                <xsl:if test="contains($a,'MY')">
-                    <xsl:text>scale(-1,1)</xsl:text>
-                </xsl:if>
-                <xsl:if test="contains($a,'MX')">
-                    <xsl:text>scale(1,-1)</xsl:text>
-                </xsl:if>
-            </xsl:if>
+            <xsl:call-template name="_transform_figure_position"/>
+            <xsl:call-template name="_transform_figure_angle"/>
         </xsl:variable>
         <xsl:if test="string-length($t)!=0">
             <xsl:attribute name="transform">
                 <xsl:value-of select="$t"/>
             </xsl:attribute>
+        </xsl:if>
+    </xsl:template>
+
+    <xsl:template name="_transform_figure_position">
+        <xsl:param name="x" select="0+substring-before(origin/pt,' ')"/>
+        <xsl:param name="y" select="0-substring-after(origin/pt,' ')"/>
+        <xsl:if test="not (count(origin)=0)">
+            <xsl:text>translate(</xsl:text>
+            <xsl:value-of select="$x"/>
+            <xsl:text>,</xsl:text>
+            <xsl:value-of select="$y"/>
+            <xsl:text>)</xsl:text>
+        </xsl:if>
+    </xsl:template>
+
+    <xsl:template name="_transform_figure_angle">
+        <xsl:param name="a" select="orientation/text()"/>
+        <xsl:if test="not (count(orientation)=0)">
+            <xsl:if test="contains($a,'R0')">
+                <xsl:text>rotate(0)</xsl:text>
+            </xsl:if>
+            <xsl:if test="contains($a,'R90')">
+                <xsl:text>rotate(270)</xsl:text>
+            </xsl:if>
+            <xsl:if test="contains($a,'R180')">
+                <xsl:text>rotate(180)</xsl:text>
+            </xsl:if>
+            <xsl:if test="contains($a,'R270')">
+                <xsl:text>rotate(90)</xsl:text>
+            </xsl:if>
+            <xsl:if test="contains($a,'MY')">
+                <xsl:text>scale(-1,1)</xsl:text>
+            </xsl:if>
+            <xsl:if test="contains($a,'MX')">
+                <xsl:text>scale(1,-1)</xsl:text>
+            </xsl:if>
         </xsl:if>
     </xsl:template>
 
@@ -710,37 +743,65 @@
     <!--display-->
     <xsl:template match="display">
         <xsl:param name="s" select="../text()"/>
-        <xsl:variable name="fg1" select="concat(ancestor::library/@name,'-',@name)"/>
-        <xsl:variable name="fg2" select="concat(ancestor::library/@name,'-',figureGroupOverride/@name)"/>
-        <xsl:if test="string-length(normalize-space(translate($s,'&quot;','')))!=0">
-            <text>
-                <xsl:attribute name="stroke">
-                    <xsl:text>none</xsl:text>
-                </xsl:attribute>
-                <xsl:attribute name="fill">
-                    <xsl:text>none</xsl:text>
-                </xsl:attribute>
-                <xsl:for-each select="key('fgl', translate($fg1,$lowercase,$uppercase))">
-                    <xsl:call-template name="_fg_font"/>
-                    <xsl:call-template name="_fg_visible"/>
-                </xsl:for-each>
-                <xsl:for-each select="key('fgl', translate($fg2,$lowercase,$uppercase))">
-                    <xsl:call-template name="_fg_font"/>
-                    <xsl:call-template name="_fg_visible"/>
-                </xsl:for-each>
-                <xsl:for-each select="figureGroupOverride">
-                    <xsl:call-template name="_fg_font"/>
-                    <xsl:call-template name="_fg_visible"/>
-                </xsl:for-each>
-                <xsl:call-template name="_text_anchor"/>
-                <xsl:if test="not (count(origin)=0)">
-                    <xsl:call-template name="_transform_text"/>
+        <xsl:variable name="fg" select="concat(ancestor::library/@name,'-',@name,figureGroupOverride/@name)"/>
+        <xsl:variable name="vw">
+            <xsl:for-each select="ancestor::instance">
+                <xsl:call-template name="_viewref_name"/>
+            </xsl:for-each>
+        </xsl:variable>
+        <xsl:variable name="vis">
+            <xsl:if test="count(.//visible//False)!=0">
+                <xsl:text>False</xsl:text>
+            </xsl:if>
+            <xsl:if test="count(.//visible//True)!=0">
+                <xsl:text>True</xsl:text>
+            </xsl:if>
+            <xsl:for-each select="key('vwl',$vw)">
+                <xsl:if test="count(.//visible//True)!=0">
+                    <xsl:text>True</xsl:text>
                 </xsl:if>
-                <xsl:call-template name="_text_out">
-                    <xsl:with-param name="s" select="$s"/>
-                </xsl:call-template>
-            </text>
-            <!-- <xsl:call-template name="_transform_debug"/> -->
+                <xsl:if test="count(.//visible//False)!=0">
+                    <xsl:text>False</xsl:text>
+                </xsl:if>
+            </xsl:for-each>
+            <xsl:for-each select="key('fgl',$fg)">
+                <xsl:if test="count(.//visible//True)!=0">
+                    <xsl:text>True</xsl:text>
+                </xsl:if>
+                <xsl:if test="count(.//visible//False)!=0">
+                    <xsl:text>False</xsl:text>
+                </xsl:if>
+            </xsl:for-each>
+            <xsl:text>True</xsl:text>
+        </xsl:variable>
+        <!-- <xsl:message>
+            <xsl:value-of select="concat('-',$vis)"/>
+        </xsl:message> -->
+        <xsl:if test="starts-with($vis,'True')">
+            <xsl:if test="string-length(normalize-space(translate($s,'&quot;','')))!=0">
+                <text>
+                    <xsl:attribute name="stroke">
+                        <xsl:text>none</xsl:text>
+                    </xsl:attribute>
+                    <xsl:attribute name="fill">
+                        <xsl:text>none</xsl:text>
+                    </xsl:attribute>
+                    <xsl:for-each select="key('fgl',$fg)">
+                        <xsl:call-template name="_fg_font"/>
+                    </xsl:for-each>
+                    <xsl:for-each select="figureGroupOverride">
+                        <xsl:call-template name="_fg_font"/>
+                    </xsl:for-each>
+                    <xsl:call-template name="_text_anchor"/>
+                    <xsl:if test="not (count(origin)=0)">
+                        <xsl:call-template name="_transform_text"/>
+                    </xsl:if>
+                    <xsl:call-template name="_text_out">
+                        <xsl:with-param name="s" select="$s"/>
+                    </xsl:call-template>
+                </text>
+                <xsl:call-template name="_transform_debug"/>
+            </xsl:if>
         </xsl:if>
     </xsl:template>
 
@@ -792,8 +853,10 @@
                     </xsl:when>
                     <xsl:when test="$j2='LEFT'">
                         <xsl:text>start</xsl:text>
+                        <!-- <xsl:text>end</xsl:text> -->
                     </xsl:when>
                     <xsl:when test="$j2='RIGHT'">
+                        <!-- <xsl:text>start</xsl:text> -->
                         <xsl:text>end</xsl:text>
                     </xsl:when>
                 </xsl:choose>
@@ -802,45 +865,62 @@
     </xsl:template>
 
     <xsl:template name="_transform_text">
+        <xsl:variable name="s">
+            <xsl:call-template name="_transform_text_position"/>
+            <xsl:call-template name="_transform_text_angle"/>
+            <!-- <xsl:for-each select="../ancestor::*/transform">
+                <xsl:message><xsl:value-of select="../@name"/></xsl:message>
+                <xsl:call-template name="_transform_text_angle"/>
+            </xsl:for-each> -->
+        </xsl:variable>
+        <xsl:if test="not (string-length($s)=0)">
+            <xsl:attribute name="transform">
+                <xsl:value-of select="$s"/>
+            </xsl:attribute>
+        </xsl:if>
+    </xsl:template>
+
+    <xsl:template name="_transform_text_position">
         <xsl:param name="x" select="0+substring-before(origin/pt,' ')"/>
         <xsl:param name="y" select="0-substring-after(origin/pt,' ')"/>
-        <xsl:param name="a" select="orientation/text()"/>
         <xsl:if test="not (count(origin)=0)">
-            <xsl:attribute name="transform">
-                <xsl:if test="not (count(origin)=0)">
-                    <xsl:text>translate(</xsl:text>
-                    <xsl:value-of select="$x"/>
-                    <xsl:text>,</xsl:text>
-                    <xsl:value-of select="$y"/>
-                    <xsl:text>)</xsl:text>
-                </xsl:if>
-                <xsl:if test="not (count(orientation)=0)">
-                    <xsl:if test="$a='R0'">
-                        <xsl:text>rotate(0)</xsl:text>
-                    </xsl:if>
-                    <xsl:if test="$a='R90'">
-                        <xsl:text>rotate(270)</xsl:text>
-                    </xsl:if>
-                    <xsl:if test="$a='R180'">
-                        <xsl:text>rotate(180)</xsl:text>
-                    </xsl:if>
-                    <xsl:if test="$a='R270'">
-                        <xsl:text>rotate(90)</xsl:text>
-                    </xsl:if>
-                    <xsl:if test="$a='MY'">
-                        <xsl:text>scale(-1,1)</xsl:text>
-                    </xsl:if>
-                    <xsl:if test="$a='MX'">
-                        <xsl:text>scale(1,-1)</xsl:text>
-                    </xsl:if>
-                    <xsl:if test="$a='MYR90'">
-                        <xsl:text>rotate(90)scale(-1,1)</xsl:text>
-                    </xsl:if>
-                    <xsl:if test="$a='MXR90'">
-                        <xsl:text>rotate(90)scale(1,-1)</xsl:text>
-                    </xsl:if>
-                </xsl:if>
-            </xsl:attribute>
+            <xsl:if test="not (count(origin)=0)">
+                <xsl:text>translate(</xsl:text>
+                <xsl:value-of select="$x"/>
+                <xsl:text>,</xsl:text>
+                <xsl:value-of select="$y"/>
+                <xsl:text>)</xsl:text>
+            </xsl:if>
+        </xsl:if>
+    </xsl:template>
+
+    <xsl:template name="_transform_text_angle">
+        <xsl:param name="a" select="orientation/text()"/>
+        <xsl:if test="not (count(orientation)=0)">
+            <xsl:if test="$a='R0'">
+                <xsl:text>rotate(0)</xsl:text>
+            </xsl:if>
+            <xsl:if test="$a='R90'">
+                <xsl:text>rotate(270)</xsl:text>
+            </xsl:if>
+            <xsl:if test="$a='R180'">
+                <xsl:text>rotate(180)</xsl:text>
+            </xsl:if>
+            <xsl:if test="$a='R270'">
+                <xsl:text>rotate(90)</xsl:text>
+            </xsl:if>
+            <xsl:if test="$a='MY'">
+                <xsl:text>scale(-1,1)</xsl:text>
+            </xsl:if>
+            <xsl:if test="$a='MX'">
+                <xsl:text>scale(1,-1)</xsl:text>
+            </xsl:if>
+            <xsl:if test="$a='MYR90'">
+                <xsl:text>rotate(90)scale(-1,1)</xsl:text>
+            </xsl:if>
+            <xsl:if test="$a='MXR90'">
+                <xsl:text>rotate(90)scale(1,-1)</xsl:text>
+            </xsl:if>
         </xsl:if>
     </xsl:template>
 
@@ -894,6 +974,44 @@
             <xsl:text>no&#32;support:&#32;</xsl:text>
             <xsl:value-of select="."/>
         </xsl:message>
+    </xsl:template>
+
+    <!--common function-->
+    <xsl:template name="_name">
+        <xsl:call-template name="_print">
+            <xsl:with-param name="s">
+                <xsl:choose>
+                    <xsl:when test="count(rename)!=0">
+                        <xsl:value-of select="rename/text()"/>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <xsl:value-of select="@name"/>
+                    </xsl:otherwise>
+                </xsl:choose>
+            </xsl:with-param>
+        </xsl:call-template>
+    </xsl:template>
+
+    <xsl:template name="_value">
+        <xsl:call-template name="_print">
+            <xsl:with-param name="s">
+                <xsl:value-of select="string/text()"/>
+                <xsl:value-of select="integer/text()"/>
+                <xsl:value-of select="number/text()"/>
+            </xsl:with-param>
+        </xsl:call-template>
+    </xsl:template>
+
+    <xsl:template name="_print">
+        <xsl:param name="s"/>
+        <xsl:variable name="s2">
+            <xsl:if test="not (starts-with($s,'&amp;'))">
+                <xsl:value-of select="substring($s,1,1)"/>
+            </xsl:if>
+            <xsl:value-of select="substring($s,2)"/>
+        </xsl:variable>
+        <xsl:variable name="s3" select="translate($s2,'&quot;','')"/>
+        <xsl:value-of select="$s3" disable-output-escaping="yes"/>
     </xsl:template>
 
 </xsl:stylesheet>
