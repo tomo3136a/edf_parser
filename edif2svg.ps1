@@ -138,7 +138,7 @@ function edif2svg($path, $encoding = "utf-8") {
         xslt $xml_path $xslt_path $out_path
     }
 
-    $cmd = @("refs", "svg")
+    $cmd = @("refs", "instance", "net", "svg")
     Get-Content (Join-Path $dirs "_page.lst") | ForEach-Object {
         $page = $_
         $cmd | ForEach-Object {
