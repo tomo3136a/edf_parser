@@ -26,15 +26,19 @@
         <xsl:for-each select="$header">
             <xsl:sort select="@name"/>
             <xsl:text>,</xsl:text>
-            <xsl:value-of select="@name"/>
+            <xsl:call-template name="_print">
+                <xsl:with-param name="s" select="@name"/>
+            </xsl:call-template>
         </xsl:for-each>
         <xsl:text>&#10;</xsl:text>
         <!--data-->
         <xsl:for-each select="instance">
             <xsl:variable name="line" select="."/>
-            <xsl:value-of select="@name"/>
+            <xsl:call-template name="_print">
+                <xsl:with-param name="s" select="@name"/>
+            </xsl:call-template>
             <xsl:text>,</xsl:text>
-            <xsl:apply-templates select="name"/>
+            <xsl:apply-templates select="rename"/>
             <xsl:text>,</xsl:text>
             <xsl:apply-templates select="designator"/>
             <xsl:for-each select="$header">
@@ -42,7 +46,21 @@
                 <xsl:variable name="kw" select="@name"/>
                 <xsl:text>,</xsl:text>
                 <xsl:for-each select="$line">
-                    <xsl:value-of select="normalize-space(property[@name=$kw]/string/text())" disable-output-escaping="yes"/>
+                    <xsl:variable name="prop" select="property[@name=$kw]"/>
+                    <xsl:text>&quot;</xsl:text>
+                    <xsl:call-template name="_print">
+                        <xsl:with-param name="s" select="normalize-space($prop/number/text())"/>
+                    </xsl:call-template>
+                    <xsl:call-template name="_print">
+                        <xsl:with-param name="s" select="normalize-space($prop/integer/text())"/>
+                    </xsl:call-template>
+                    <xsl:call-template name="_print">
+                        <xsl:with-param name="s" select="normalize-space($prop/string/text())"/>
+                    </xsl:call-template>
+                    <xsl:call-template name="_print">
+                        <xsl:with-param name="s" select="normalize-space($prop/text())"/>
+                    </xsl:call-template>
+                    <xsl:text>&quot;</xsl:text>
                 </xsl:for-each>
             </xsl:for-each>
             <xsl:text>&#10;</xsl:text>
@@ -50,18 +68,25 @@
     </xsl:template>
 
     <!--common-->
-    <xsl:template match="name">
-        <xsl:text>&#32;name[</xsl:text>
-        <xsl:call-template name="_name"/>
-        <xsl:text>]</xsl:text>
+    <xsl:template match="rename">
+        <xsl:call-template name="_print">
+            <xsl:with-param name="s" select="text()"/>
+        </xsl:call-template>
     </xsl:template>
 
     <xsl:template match="designator">
         <xsl:if test="string-length(normalize-space(text()))!=0">
-            <xsl:text>&#32;designator[</xsl:text>
-            <xsl:value-of select="text()"/>
-            <xsl:text>]</xsl:text>
+            <xsl:call-template name="_print">
+                <xsl:with-param name="s" select="text()"/>
+            </xsl:call-template>
         </xsl:if>
+        <xsl:apply-templates select="stringDisplay"/>
+    </xsl:template>
+
+    <xsl:template match="stringDisplay">
+        <xsl:call-template name="_print">
+            <xsl:with-param name="s" select="text()"/>
+        </xsl:call-template>
     </xsl:template>
 
     <xsl:template match="property">
