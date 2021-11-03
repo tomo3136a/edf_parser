@@ -12,8 +12,8 @@
 
     <!--edif-->
     <xsl:template match="edif">
-        <xsl:variable name="cell_ref" select="design/cellRef/@name"/>
-        <xsl:variable name="library_ref" select="design/cellRef/libraryRef/@name"/>
+        <xsl:variable name="cell_ref" select="design/cellref/@name"/>
+        <xsl:variable name="library_ref" select="design/cellref/libraryref/@name"/>
 
         <!--page list-->
         <xsl:if test="contains($mode,'page')">
@@ -31,7 +31,7 @@
         <!--figureGroup list-->
         <xsl:if test="contains($mode,'group')">
             <xsl:for-each select="(library|external)[@name=$library_ref]">
-                <xsl:for-each select="technology/figureGroup">
+                <xsl:for-each select="technology/figuregroup">
                     <xsl:value-of select="rename/text()|@name" disable-output-escaping="yes"/>
                     <xsl:text>&#10;</xsl:text>
                 </xsl:for-each>
@@ -42,7 +42,7 @@
         <!--fogureGroup item list-->
         <xsl:if test="contains($mode,'item')">
             <xsl:for-each select="(library|external)[@name=$library_ref]">
-                <xsl:for-each select="technology/figureGroup[1]/*">
+                <xsl:for-each select="technology/figuregroup[1]/*">
                     <xsl:value-of select="name()" disable-output-escaping="yes"/>
                     <xsl:if test="name()='property'">
                         <xsl:text>-</xsl:text>
@@ -57,7 +57,7 @@
         <!--figureGroup list-->
         <xsl:if test="contains($mode,'fg')">
             <xsl:for-each select="(library|external)[@name=$library_ref]">
-                <xsl:for-each select="technology/figureGroup">
+                <xsl:for-each select="technology/figuregroup">
                     <xsl:value-of select="rename/text()|@name" disable-output-escaping="yes"/>
                     <xsl:text>&#10;</xsl:text>
                     <xsl:for-each select="*">
@@ -155,7 +155,7 @@
                     <xsl:variable name="cell_name" select="rename/text()|@name"/>
                     <xsl:for-each select="view">
                         <xsl:variable name="view_name" select="rename/text()|@name"/>
-                        <xsl:for-each select="interface/symbol/portImplementation">
+                        <xsl:for-each select="interface/symbol/portimplementation">
                             <xsl:variable name="port_name" select="rename/text()|@name"/>
                             <xsl:variable name="pin_name" select="../../port[@name=$port_name]/designator"/>
                             <xsl:value-of select="$library_name" disable-output-escaping="yes"/>

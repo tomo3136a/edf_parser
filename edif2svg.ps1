@@ -41,7 +41,7 @@ filter s_prs {
         }
         switch ($seq) {
             1 {
-                $node = $node.AppendChild($doc.CreateNode("element", $s, $null))
+                $node = $node.AppendChild($doc.CreateNode("element", $s.ToLower(), $null))
                 $seq = if ($nm -contains $s) { 2 } elseif ($sn -contains $s) { 3 } else { 4 }
             }
             2 { $node.SetAttribute("name", $s) | Out-Null; $seq = 5 }

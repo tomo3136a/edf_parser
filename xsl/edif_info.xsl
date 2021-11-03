@@ -18,9 +18,9 @@
         <xsl:text>トップデザイン：</xsl:text>
         <xsl:call-template name="_name"/>
         <xsl:text>&#32;&#32;</xsl:text>
-        <xsl:value-of select="cellRef/libraryRef/@name"/>
+        <xsl:value-of select="cellref/libraryref/@name"/>
         <xsl:text>-</xsl:text>
-        <xsl:value-of select="cellRef/@name"/>
+        <xsl:value-of select="cellref/@name"/>
         <xsl:text>&#10;</xsl:text>
         <xsl:text>&#10;</xsl:text>
     </xsl:template>
@@ -36,12 +36,12 @@
     </xsl:template>
 
     <xsl:template match="technology">
-        <xsl:apply-templates select="figureGroup"/>
+        <xsl:apply-templates select="figuregroup"/>
         <xsl:apply-templates select="property"/>
         <xsl:text>&#10;</xsl:text>
     </xsl:template>
 
-    <xsl:template match="figureGroup">
+    <xsl:template match="figuregroup">
         <xsl:text>&#32;&#32;グループ：</xsl:text>
         <xsl:call-template name="_name"/>
         <xsl:apply-templates select="property"/>
@@ -110,10 +110,10 @@
         <xsl:apply-templates select="designator"/>
         <xsl:apply-templates select="property"/>
         <xsl:text>&#10;</xsl:text>
-        <xsl:apply-templates select="portImplementation"/>
+        <xsl:apply-templates select="portimplementation"/>
     </xsl:template>
 
-    <xsl:template match="portImplementation">
+    <xsl:template match="portimplementation">
         <xsl:text>&#32;&#32;ポート実装：</xsl:text>
         <xsl:call-template name="_name"/>
         <xsl:apply-templates select="designator"/>
@@ -128,10 +128,10 @@
         <xsl:apply-templates select="designator"/>
         <xsl:apply-templates select="property"/>
         <xsl:text>&#10;</xsl:text>
-        <xsl:apply-templates select="portInstance"/>
+        <xsl:apply-templates select="portinstance"/>
     </xsl:template>
 
-    <xsl:template match="portInstance">
+    <xsl:template match="portinstance">
         <xsl:text>&#32;&#32;&#32;&#32;部品ポート：</xsl:text>
         <xsl:call-template name="_name"/>
         <xsl:apply-templates select="designator"/>

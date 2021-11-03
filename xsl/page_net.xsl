@@ -10,8 +10,8 @@
     </xsl:template>
 
     <xsl:template match="edif">
-        <xsl:variable name="library" select="design/cellRef/libraryRef/@name"/>
-        <xsl:variable name="cell" select="design/cellRef/@name"/>
+        <xsl:variable name="library" select="design/cellref/libraryref/@name"/>
+        <xsl:variable name="cell" select="design/cellref/@name"/>
         <xsl:apply-templates select="library[@name=$library]/cell[@name=$cell]"/>
     </xsl:template>
 
@@ -80,10 +80,10 @@
                 <xsl:with-param name="s" select="text()"/>
             </xsl:call-template>
         </xsl:if>
-        <xsl:apply-templates select="stringDisplay"/>
+        <xsl:apply-templates select="stringdisplay"/>
     </xsl:template>
 
-    <xsl:template match="stringDisplay">
+    <xsl:template match="stringdisplay">
         <xsl:call-template name="_print">
             <xsl:with-param name="s" select="text()"/>
         </xsl:call-template>
