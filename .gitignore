@@ -2,3 +2,5 @@ _*/
 _*
 *.bak
 *.lnk
+*.exe
+obj/
