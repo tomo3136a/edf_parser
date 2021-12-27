@@ -284,6 +284,8 @@
             <xsl:apply-templates select="instance"/>
             <xsl:apply-templates select="net"/>
             <xsl:apply-templates select="property"/>
+            <xsl:apply-templates select="name"/>
+            <xsl:apply-templates select="rename"/>
         </g>
     </xsl:template>
 
