@@ -1,20 +1,17 @@
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Text;
-using System.Text.RegularExpressions;
-using System.Windows.Forms;
 using System.Xml;
 using System.Xml.Xsl;
 
 namespace hwutil
 {
-    public class Application
+    using MsgBox = System.Windows.Forms.MessageBox;
+    public class EdifXmlDocument
     {
-        public string msg = "error : ";
-
-        readonly List<string> sn = new List<string>() { "name", "rename" };
-        readonly List<string> nm = new List<string>() {
+        readonly string[] nms = {
             "edif", "design", "external", "library", "cell", "view", "page",
             "instance", "portInstance", "port", "portBundle", "portListAlias",
             "portImplementation",
@@ -22,29 +19,36 @@ namespace hwutil
             "figureGroup", "figureGroupOverride", "figure", "offpageConnector",
             "net", "netBundle", "property", "parameter", "display", "keywordDisplay"
         };
+        readonly string[] sns = { "name", "rename" };
+        readonly Dictionary<string, string> nm = new Dictionary<string, string>();
+        readonly Dictionary<string, string> sn = new Dictionary<string, string>();
         enum PS { S0, S1, S2, S3, S4 };
+        enum TK { EXP, STR, STR2 };
         XmlDocument doc;
         XmlNode node;
         PS seq;
-        public void InitParse()
+        void InitParse()
         {
+            foreach (string s in nms) { this.nm.Add(s.ToLower(), s); }
+            foreach (string s in sns) { this.sn.Add(s.ToLower(), s); }
             doc = new XmlDocument();
             doc.AppendChild(doc.CreateXmlDeclaration("1.0", null, null));
             node = doc;
             seq = PS.S0;
         }
-        public string Parse(string s)
+        string Parse(string s)
         {
             if (s.Length <= 0) { return ""; }
             if (s == "(") { seq = PS.S0; return ""; }
             if (s == ")") { node = node.ParentNode; seq = PS.S3; return ""; }
+            string sl = s.ToLower();
             switch (seq)
             {
                 case PS.S0:
-                    node = node.AppendChild(doc.CreateNode("element", s.ToLower(), null));
-                    if (nm.Contains(s)) { seq = PS.S1; break; }
-                    if (sn.Contains(s)) { seq = PS.S2; } else { seq = PS.S3; }
-                    break;
+                    node = node.AppendChild(doc.CreateNode("element", sl, null));
+                    if (nm.ContainsKey(sl)) { seq = PS.S1; break; }
+                    if (sn.ContainsKey(sl)) { seq = PS.S2; break; }
+                    seq = PS.S3; break;
                 case PS.S1: ((XmlElement)node).SetAttribute("name", s); seq = PS.S4; break;
                 case PS.S2: ((XmlElement)node.ParentNode).SetAttribute("name", s); seq = PS.S3; break;
                 case PS.S3: node.AppendChild(doc.CreateTextNode(s)); seq = PS.S4; break;
@@ -56,9 +60,7 @@ namespace hwutil
             }
             return "";
         }
-
-        enum TK { EXP, STR, STR2 };
-        public void LoadEdif(string src, string enc = "Shift_JIS")
+        void LoadEdif(string src, string enc)
         {
             InitParse();
             using (StreamReader sr = new StreamReader(src, Encoding.GetEncoding(enc)))
@@ -97,20 +99,28 @@ namespace hwutil
                 Parse(s);
             }
         }
-
-        public bool Edif2Xml(string src, string dst, string encoding = "Shift_JIS")
+        public bool Execute(string src, string dst)
         {
-            if (!File.Exists(src)) { msg = "not find: " + src; return false; }
+            if (!File.Exists(src)) { return false; }
             if (File.Exists(dst))
             {
                 DateTime src_dt = File.GetLastWriteTime(src);
                 DateTime dst_dt = File.GetLastWriteTime(dst);
                 if (dst_dt > src_dt) { return true; }
             }
-            LoadEdif(src, encoding);
+            string encoding = ConfigurationManager.AppSettings["encoding"];
+            // encoding: utf-8, shift_jis, euc-jp
+            LoadEdif(src, encoding ?? "shift_jis");
             doc.Save(dst);
             return true;
         }
+    }
+
+    public class Application
+    {
+        readonly EdifXmlDocument edifxml = new EdifXmlDocument();
+
+        public bool Edif2Xml(string src, string dst) { return edifxml.Execute(src, dst); }
 
         // xslt transformation
         public void Xslt(string src, string xslt, string dst, Dictionary<string, string> col)
@@ -128,7 +138,7 @@ namespace hwutil
 
         public void Format(string src, string dst)
         {
-            doc = new XmlDocument();
+            XmlDocument doc = new XmlDocument();
             doc.Load(src);
             doc.Save(dst);
         }
@@ -176,29 +186,19 @@ namespace hwutil
 
         public static void Main(string[] args)
         {
-            Application app = new Application();
-            string enc = "shift_jis";   // utf-8, shift_jis, euc-jp
-            foreach (string arg in args)
-            {
-                if (arg.StartsWith("-E=")) { enc = arg.Substring(3); }
-            }
             try
             {
-                Regex re = new Regex("\\.ed[ifs]+$");
+                string config = Environment.GetCommandLineArgs()[0].Replace(".exe", ".config");
+                AppDomain.CurrentDomain.SetData("APP_CONFIG_FILE", config);
+                Application app = new Application();
                 foreach (string arg in args)
                 {
-                    if (arg.StartsWith("-")) { continue; }
                     string src = arg + ".xml";
-                    Match m = re.Match(Path.GetExtension(arg));
-                    if (m.Success && !app.Edif2Xml(arg, src, enc))
-                        MessageBox.Show(app.msg);
+                    if (!app.Edif2Xml(arg, src)) { MsgBox.Show("not find: " + src); continue; }
                     app.Xml2Svg(src);
                 }
             }
-            catch
-            {
-                MessageBox.Show("error.");
-            }
+            catch (Exception e) { MsgBox.Show(e.ToString()); }
         }
     }
 }

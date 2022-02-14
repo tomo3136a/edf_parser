@@ -1,8 +1,7 @@
-$Sources = "src/edif2xml.cs"
-$ReferencedAssemblies = "System.Xml", "System.Windows.Forms"
-$OutputPath = Join-Path (Resolve-Path ".") "edif2xml.exe"
-
+$app = "edif2xml"
 #Add-Type -OutputType WindowsApplication
 Add-Type -OutputType ConsoleApplication `
-  -Path $Sources -OutputAssembly $OutputPath `
-  -ReferencedAssemblies $ReferencedAssemblies
+  -Path "src/*.cs" `
+  -OutputAssembly (Join-Path (Resolve-Path ".") "${app}.exe") `
+  -ReferencedAssemblies "System.Configuration", `
+  "System.Xml", "System.Windows.Forms"
