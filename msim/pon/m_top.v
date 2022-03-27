@@ -142,6 +142,6 @@ c_ldo i_ldo_p3r3a (p3r3a, p3r8, p5r5, pg_core);
 defparam i_ldo_p3r3a.vout = 3_30;   //output value 3.3
 defparam i_ldo_p3r3a.pin_min = 1_00;//input minimum 1.0
 defparam i_ldo_p3r3a.ton = 1;       //on delay 10us
-defparam i_ldo_p3r3a.tss = 1;       //soft start 10us
+defparam i_ldo_p3r3a.tss = 1_00;    //soft start 1ms
 
 endmodule

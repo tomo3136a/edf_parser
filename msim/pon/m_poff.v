@@ -14,8 +14,6 @@ wire shdn_n, poff_trg;
 wire shdn_in, psw_n, poff_n, ov, uv_n;
 wire shdn_1, shdn_2, shdn_3;
 
-//pullup (poff_trg, uv_n);
-//pulldown (poff_n, ov);
 defparam i_delay.td   = 20;    //200ms
 
 c_delay i_delay (shdn_2, shdn_1);
