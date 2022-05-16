@@ -191,11 +191,32 @@ namespace hwutil
                 string config = Environment.GetCommandLineArgs()[0].Replace(".exe", ".config");
                 AppDomain.CurrentDomain.SetData("APP_CONFIG_FILE", config);
                 Application app = new Application();
+                List<string> src_lst = new List<string>();
+                List<string> xsl_lst = new List<string>();
+
                 foreach (string arg in args)
                 {
+                    if (arg.Contains(".xsl")){ xsl_lst.Add(arg); } else { src_lst.Add(arg); }
+                }
+                
+                foreach (string arg in src_lst)
+                {
                     string src = arg + ".xml";
-                    if (!app.Edif2Xml(arg, src)) { MsgBox.Show("not find: " + src); continue; }
-                    app.Xml2Svg(src);
+                    if (arg.Contains(".edf")){ src = arg.Replace(".edf", ".xedf"); }
+                    if (arg.Contains(".edif")){ src = arg.Replace(".edif", ".xedf"); }
+                    if (arg.Contains(".xedf")){ src = arg; }
+                    else if (!app.Edif2Xml(arg, src)) { MsgBox.Show("not find: " + src); continue; }
+                    if (xsl_lst.Count > 0) {
+                        foreach (string xsl in xsl_lst) {
+                            var col = new Dictionary<string, string>() { };
+                            string dst = Path.GetFileNameWithoutExtension(src);
+                            dst += "_" + Path.GetFileNameWithoutExtension(xsl) + ".lst";
+                            app.Xslt(src, xsl, dst, col);
+                        }
+                    }
+                    else{
+                        app.Xml2Svg(src);
+                    }
                 }
             }
             catch (Exception e) { MsgBox.Show(e.ToString()); }
