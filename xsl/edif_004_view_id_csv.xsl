@@ -3,10 +3,13 @@
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
     <xsl:output method="text"/>
     <xsl:template match="/">
-        <xsl:apply-templates select="edif/library/cell"/>
+        <xsl:text>library,cell,view</xsl:text>
+        <xsl:apply-templates select="edif/library/cell/view"/>
     </xsl:template>
-    <xsl:template match="cell">
+    <xsl:template match="view">
         <xsl:value-of select="ancestor::library/@name"/>
+        <xsl:text>,</xsl:text>
+        <xsl:value-of select="ancestor::cell/@name"/>
         <xsl:text>,</xsl:text>
         <xsl:value-of select="@name"/>
         <xsl:text>&#10;</xsl:text>

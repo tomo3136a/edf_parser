@@ -3,14 +3,11 @@
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
     <xsl:output method="text"/>
     <xsl:template match="/">
-        <xsl:apply-templates select="/edif/design"/>
+        <xsl:text>library</xsl:text>
+        <xsl:apply-templates select="edif/library"/>
     </xsl:template>
-    <xsl:template match="design">
+    <xsl:template match="library">
         <xsl:value-of select="@name"/>
-        <xsl:text>,</xsl:text>
-        <xsl:value-of select="cellref/libraryref/@name"/>
-        <xsl:text>,</xsl:text>
-        <xsl:value-of select="cellref/@name"/>
         <xsl:text>&#10;</xsl:text>
     </xsl:template>
 </xsl:stylesheet>

@@ -122,6 +122,16 @@ namespace hwutil
 
         public bool Edif2Xml(string src, string dst) { return edifxml.Execute(src, dst); }
 
+        public string GetDestName(string src, string xsl, string pre = "")
+        {
+            string dst = Path.GetFileNameWithoutExtension(xsl).Replace(".", "_") + ".lst";
+            if (dst.Contains("_xml.lst")){ dst = dst.Replace("_xml.lst", ".xml"); }
+            else if (dst.Contains("_csv.lst")){ dst = dst.Replace("_csv.lst", ".csv"); }
+            else if (dst.Contains("_lst.lst")){ dst = dst.Replace("_lst.lst", ".lst"); }
+            else if (dst.Contains("_txt.lst")){ dst = dst.Replace("_txt.lst", ".txt"); }
+            return dst;
+        }
+
         // xslt transformation
         public void Xslt(string src, string xslt, string dst, Dictionary<string, string> col)
         {
@@ -150,7 +160,8 @@ namespace hwutil
 
             src = Path.GetFullPath(src);
             string dir = Path.GetDirectoryName(src);
-            string res_dir = Path.Combine(dir, "result");
+            string res = Path.GetFileNameWithoutExtension(src);
+            string res_dir = Path.Combine(dir, res);
             if (!Directory.Exists(res_dir))
                 Directory.CreateDirectory(res_dir);
 
@@ -158,9 +169,7 @@ namespace hwutil
             foreach (string k in Directory.EnumerateFiles(xsl_dir, "edif_*.xsl"))
             {
                 string xsl = Path.Combine(xsl_dir, k);
-                string s = Path.GetFileNameWithoutExtension(k);
-                if (!s.Contains(".")) s += ".lst";
-                string dst = Path.Combine(res_dir, s);
+                string dst = Path.Combine(res_dir, GetDestName(src, xsl));
                 Xslt(src, xsl, dst, col);
             }
             string lst = Path.Combine(res_dir, "edif_page.lst");
@@ -171,11 +180,8 @@ namespace hwutil
                 foreach (string k in Directory.EnumerateFiles(xsl_dir, "page_*.xsl"))
                 {
                     string xsl = Path.Combine(xsl_dir, k);
-                    string s = Path.GetFileNameWithoutExtension(k);
-                    s = s.Replace("page_", page + "_");
-                    if (!s.Contains(".")) s += ".lst";
-                    string dst = Path.Combine(res_dir, s);
-                    Xslt(src, xsl, dst, col);
+                    string dst = GetDestName(src, xsl).Replace("page_", page + "_");
+                    Xslt(src, xsl, Path.Combine(res_dir, dst), col);
                 }
                 string name = Path.GetFileNameWithoutExtension(src);
                 string in_path = Path.Combine(res_dir, page + "_svg.lst");
@@ -193,10 +199,14 @@ namespace hwutil
                 Application app = new Application();
                 List<string> src_lst = new List<string>();
                 List<string> xsl_lst = new List<string>();
+                var col = new Dictionary<string, string>() { };
+                string[] ss;
 
                 foreach (string arg in args)
                 {
-                    if (arg.Contains(".xsl")){ xsl_lst.Add(arg); } else { src_lst.Add(arg); }
+                    if (arg.Contains(".xsl")){ xsl_lst.Add(arg); }
+                    else if (arg.Contains("=")) { ss = arg.Split('='); col.Add(ss[0], ss[1]); }
+                    else { src_lst.Add(arg); }
                 }
                 
                 foreach (string arg in src_lst)
@@ -208,10 +218,7 @@ namespace hwutil
                     else if (!app.Edif2Xml(arg, src)) { MsgBox.Show("not find: " + src); continue; }
                     if (xsl_lst.Count > 0) {
                         foreach (string xsl in xsl_lst) {
-                            var col = new Dictionary<string, string>() { };
-                            string dst = Path.GetFileNameWithoutExtension(src);
-                            dst += "_" + Path.GetFileNameWithoutExtension(xsl) + ".lst";
-                            app.Xslt(src, xsl, dst, col);
+                            app.Xslt(src, xsl, app.GetDestName(src, xsl), col);
                         }
                     }
                     else{
