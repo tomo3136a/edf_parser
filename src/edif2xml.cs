@@ -125,7 +125,8 @@ namespace hwutil
         public string GetDestName(string src, string xsl, string pre = "")
         {
             string dst = Path.GetFileNameWithoutExtension(xsl).Replace(".", "_") + ".lst";
-            if (dst.Contains("_xml.lst")){ dst = dst.Replace("_xml.lst", ".xml"); }
+            if (dst.Contains("_xfdf.lst")){ dst = dst.Replace("_xfdf.lst", ".xfdf"); }
+            else if (dst.Contains("_xml.lst")){ dst = dst.Replace("_xml.lst", ".xml"); }
             else if (dst.Contains("_csv.lst")){ dst = dst.Replace("_csv.lst", ".csv"); }
             else if (dst.Contains("_lst.lst")){ dst = dst.Replace("_lst.lst", ".lst"); }
             else if (dst.Contains("_txt.lst")){ dst = dst.Replace("_txt.lst", ".txt"); }
@@ -139,7 +140,21 @@ namespace hwutil
             XsltArgumentList al = new XsltArgumentList();
             XmlWriterSettings ws = new XmlWriterSettings();
             trans.Load(xslt);
-            foreach (string k in col.Keys) { al.AddParam(k, "", col[k]); }
+            foreach (string k in col.Keys) {
+                string v = col[k];
+                if (v[0] == '@') {
+                    v=v.Substring(1);
+                    if (File.Exists(v)){
+                        XmlDocument doc = new XmlDocument();
+                        doc.Load(v);
+                        al.AddParam(k, "", doc);
+                    }
+                }
+                else{
+                    al.AddParam(k, "", col[k]);
+                }
+            }
+
             ws.ConformanceLevel = ConformanceLevel.Fragment;
             XmlWriter wrt = XmlWriter.Create(dst, ws);
             trans.Transform(src, al, wrt);
