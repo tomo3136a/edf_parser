@@ -120,22 +120,31 @@ namespace hwutil
     {
         readonly EdifXmlDocument edifxml = new EdifXmlDocument();
 
-        public bool Edif2Xml(string src, string dst) { return edifxml.Execute(src, dst); }
+        public bool Edif2Xml(string src, string dst)
+        {
+            bool res = true;
+            var tm = new System.Diagnostics.Stopwatch();
+            tm.Start();
+            if(File.GetLastWriteTime(src) > File.GetLastWriteTime(dst)) {
+                res = edifxml.Execute(src, dst);
+            }
+            tm.Stop();
+            string s = Path.GetFileNameWithoutExtension(src);
+            Console.WriteLine("edif2xml: "+s+" -> "+tm.ElapsedMilliseconds+"ƒ~ƒŠ•b");
+            return res;
+        }
 
         public string GetDestName(string src, string xsl, string pre = "")
         {
-            string dst = Path.GetFileNameWithoutExtension(xsl).Replace(".", "_") + ".lst";
-            if (dst.Contains("_xfdf.lst")){ dst = dst.Replace("_xfdf.lst", ".xfdf"); }
-            else if (dst.Contains("_xml.lst")){ dst = dst.Replace("_xml.lst", ".xml"); }
-            else if (dst.Contains("_csv.lst")){ dst = dst.Replace("_csv.lst", ".csv"); }
-            else if (dst.Contains("_lst.lst")){ dst = dst.Replace("_lst.lst", ".lst"); }
-            else if (dst.Contains("_txt.lst")){ dst = dst.Replace("_txt.lst", ".txt"); }
-            return dst;
+            string dst = Path.GetFileNameWithoutExtension(xsl);
+            return (Path.HasExtension(dst)) ? dst : (dst + ".txt");
         }
 
         // xslt transformation
         public void Xslt(string src, string xslt, string dst, Dictionary<string, string> col)
         {
+            var tm = new System.Diagnostics.Stopwatch();
+            tm.Start();
             XslCompiledTransform trans = new XslCompiledTransform();
             XsltArgumentList al = new XsltArgumentList();
             XmlWriterSettings ws = new XmlWriterSettings();
@@ -159,6 +168,8 @@ namespace hwutil
             XmlWriter wrt = XmlWriter.Create(dst, ws);
             trans.Transform(src, al, wrt);
             wrt.Close();
+            tm.Stop();
+            Console.WriteLine("xslt: "+Path.GetFileNameWithoutExtension(xslt)+" -> "+tm.ElapsedMilliseconds+"ƒ~ƒŠ•b");
         }
 
         public void Format(string src, string dst)
@@ -188,20 +199,23 @@ namespace hwutil
                 Xslt(src, xsl, dst, col);
             }
             string lst = Path.Combine(res_dir, "edif_page.lst");
-            foreach (string page in File.ReadAllLines(lst))
+            if (File.Exists(lst))
             {
-                col = new Dictionary<string, string>() { };
-                col.Add("page", page);
-                foreach (string k in Directory.EnumerateFiles(xsl_dir, "page_*.xsl"))
+                foreach (string page in File.ReadAllLines(lst))
                 {
-                    string xsl = Path.Combine(xsl_dir, k);
-                    string dst = GetDestName(src, xsl).Replace("page_", page + "_");
-                    Xslt(src, xsl, Path.Combine(res_dir, dst), col);
+                    col = new Dictionary<string, string>() { };
+                    col.Add("page", page);
+                    foreach (string k in Directory.EnumerateFiles(xsl_dir, "page_*.xsl"))
+                    {
+                        string xsl = Path.Combine(xsl_dir, k);
+                        string dst = GetDestName(src, xsl).Replace("page_", page + "_");
+                        Xslt(src, xsl, Path.Combine(res_dir, dst), col);
+                    }
+                    string name = Path.GetFileNameWithoutExtension(src);
+                    string in_path = Path.Combine(res_dir, page + "_svg.lst");
+                    string out_path = Path.Combine(dir, name + "_" + page + ".svg");
+                    Format(in_path, out_path);
                 }
-                string name = Path.GetFileNameWithoutExtension(src);
-                string in_path = Path.Combine(res_dir, page + "_svg.lst");
-                string out_path = Path.Combine(dir, name + "_" + page + ".svg");
-                Format(in_path, out_path);
             }
         }
 
@@ -212,6 +226,7 @@ namespace hwutil
                 string config = Environment.GetCommandLineArgs()[0].Replace(".exe", ".config");
                 AppDomain.CurrentDomain.SetData("APP_CONFIG_FILE", config);
                 Application app = new Application();
+                List<string> opt_lst = new List<string>();
                 List<string> src_lst = new List<string>();
                 List<string> xsl_lst = new List<string>();
                 var col = new Dictionary<string, string>() { };
@@ -219,7 +234,8 @@ namespace hwutil
 
                 foreach (string arg in args)
                 {
-                    if (arg.Contains(".xsl")){ xsl_lst.Add(arg); }
+                    if (arg[0] == '-'){ opt_lst.Add(arg); }
+                    else if (arg.Contains(".xsl")){ xsl_lst.Add(arg); }
                     else if (arg.Contains("=")) { ss = arg.Split('='); col.Add(ss[0], ss[1]); }
                     else { src_lst.Add(arg); }
                 }
