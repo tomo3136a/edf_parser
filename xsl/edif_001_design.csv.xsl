@@ -4,6 +4,7 @@
     <xsl:output method="text"/>
     <xsl:template match="/">
         <xsl:text>design,library,cell</xsl:text>
+        <xsl:text>&#10;</xsl:text>
         <xsl:apply-templates select="/edif/design"/>
     </xsl:template>
     <xsl:template match="design">

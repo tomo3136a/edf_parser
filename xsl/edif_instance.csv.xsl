@@ -1,26 +1,34 @@
 <?xml version="1.0"?>
 <xsl:stylesheet version="1.0"
-    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-    xmlns:msxsl="urn:schemas-microsoft-com:xslt">
-    <xsl:param name="page"/>
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+    <xsl:import href="common.xsl"/>
     <xsl:output method="text"/>
+    <xsl:param name="page" select="true()"/>
+    <xsl:param name="refs" select="true()"/>
+
+    <xsl:key name="vw" match="library/cell/view" 
+        use="concat(ancestor::library/@name,'-',ancestor::cell/@name,'-',@name)"/>
 
     <xsl:template match="/">
         <xsl:apply-templates select="edif"/>
     </xsl:template>
 
     <xsl:template match="edif">
-        <xsl:variable name="library" select="design/cellref/libraryref/@name"/>
-        <xsl:variable name="cell" select="design/cellref/@name"/>
-        <xsl:apply-templates select="library[@name=$library]/cell[@name=$cell]"/>
+        <xsl:variable name="lname" select="design/cellref/libraryref/@name"/>
+        <xsl:variable name="cname" select="design/cellref/@name"/>
+        <xsl:apply-templates
+            select="library[@name=$lname]/cell[@name=$cname]/view/contents"/>
     </xsl:template>
 
-    <xsl:template match="cell">
-        <xsl:apply-templates select="view/contents/page[@name=$page]"/>
-    </xsl:template>
-
-    <xsl:template match="page">
-        <xsl:variable name="header" select=".//net/property[not(@name=preceding::property/@name)]"/>
+    <xsl:template match="contents">
+        <xsl:variable name="header"
+            select="page[@name=$page]/instance/property[not(@name=preceding::property/@name)]"/>
+        <!-- <xsl:variable name="header"> -->
+            <xsl:for-each select="page[@name=$page]/instance/property[not(@name=preceding::property/@name)]">
+                <xsl:sort select="@name"/>
+                <xsl:copy-of select="."/>
+            </xsl:for-each>
+        <!-- </xsl:variable> -->
         <!--header-->
         <xsl:text>id,name,designator</xsl:text>
         <xsl:for-each select="$header">
@@ -32,8 +40,10 @@
         </xsl:for-each>
         <xsl:text>&#10;</xsl:text>
         <!--data-->
-        <xsl:for-each select=".//net">
+        <xsl:for-each select="page[@name=$page]/instance">
             <xsl:variable name="line" select="."/>
+            <xsl:variable name="vwn" select="concat(viewref/cellref/libraryref/@name,
+                '-',viewref/cellref/@name,'-',viewref/@name)"/>
             <xsl:call-template name="_print">
                 <xsl:with-param name="s" select="@name"/>
             </xsl:call-template>
@@ -41,6 +51,11 @@
             <xsl:apply-templates select="rename"/>
             <xsl:text>,</xsl:text>
             <xsl:apply-templates select="designator"/>
+            <xsl:text>,</xsl:text>
+            <xsl:value-of select="$vwn"/>
+            <xsl:text>,</xsl:text>
+            <xsl:apply-templates select="key('vw',$vwn)"/>
+            <xsl:text>,</xsl:text>
             <xsl:for-each select="$header">
                 <xsl:sort select="@name"/>
                 <xsl:variable name="kw" select="@name"/>
@@ -66,6 +81,15 @@
             <xsl:text>&#10;</xsl:text>
         </xsl:for-each>
     </xsl:template>
+
+    <xsl:template match="view">
+        <xsl:value-of select="@name"/>
+        <xsl:call-template name="_print">
+            <xsl:with-param name="s" select="text()"/>
+        </xsl:call-template>
+    </xsl:template>
+
+    <!-- <xsl:for-each select=".//viewref[generate-id()=generate-id(key('refs',translate(concat(cellref/libraryref/@name,'-',cellref/@name,'-',@name),$lowercase,$uppercase))[1])]"> -->
 
     <!--common-->
     <xsl:template match="rename">
@@ -94,44 +118,6 @@
         <xsl:call-template name="_name"/>
         <xsl:text>=</xsl:text>
         <xsl:call-template name="_value"/>
-    </xsl:template>
-
-    <!--common function-->
-    <xsl:template name="_name">
-        <xsl:call-template name="_print">
-            <xsl:with-param name="s">
-                <xsl:choose>
-                    <xsl:when test="count(rename)!=0">
-                        <xsl:value-of select="rename/text()"/>
-                    </xsl:when>
-                    <xsl:otherwise>
-                        <xsl:value-of select="@name"/>
-                    </xsl:otherwise>
-                </xsl:choose>
-            </xsl:with-param>
-        </xsl:call-template>
-    </xsl:template>
-
-    <xsl:template name="_value">
-        <xsl:call-template name="_print">
-            <xsl:with-param name="s">
-                <xsl:value-of select="string/text()"/>
-                <xsl:value-of select="integer/text()"/>
-                <xsl:value-of select="number/text()"/>
-            </xsl:with-param>
-        </xsl:call-template>
-    </xsl:template>
-
-    <xsl:template name="_print">
-        <xsl:param name="s"/>
-        <xsl:variable name="s2">
-            <xsl:if test="not (starts-with($s,'&amp;'))">
-                <xsl:value-of select="substring($s,1,1)"/>
-            </xsl:if>
-            <xsl:value-of select="substring($s,2)"/>
-        </xsl:variable>
-        <xsl:variable name="s3" select="translate($s2,'&quot;','')"/>
-        <xsl:value-of select="$s3" disable-output-escaping="yes"/>
     </xsl:template>
 
 </xsl:stylesheet>
