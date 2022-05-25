@@ -140,6 +140,22 @@ namespace hwutil
             return (Path.HasExtension(dst)) ? dst : (dst + ".txt");
         }
 
+        public bool Csv2Xml(XmlDocument doc, string src)
+        {
+            XmlDeclaration decl = doc.CreateXmlDeclaration(@"1.0", @"utf-8", null);
+            XmlElement root = doc.CreateElement("data");
+            XmlElement dl = doc.CreateElement("dl");
+            foreach (string line in File.ReadAllLines(src)) {
+                XmlElement dd = doc.CreateElement("dd");
+                dd.InnerText = line;
+                dl.AppendChild(dd);
+            }
+            root.AppendChild(dl);
+            doc.AppendChild(decl);
+            doc.AppendChild(root);
+            return true;
+        }
+
         // xslt transformation
         public void Xslt(string src, string xslt, string dst, Dictionary<string, string> col)
         {
@@ -155,7 +171,14 @@ namespace hwutil
                     v=v.Substring(1);
                     if (File.Exists(v)){
                         XmlDocument doc = new XmlDocument();
-                        doc.Load(v);
+                        Console.WriteLine("exts: "+Path.GetExtension(v));
+
+                        if (Path.GetExtension(v) == ".txt") {
+                            Csv2Xml(doc, v);
+                        }
+                        else{
+                            doc.Load(v);
+                        }
                         al.AddParam(k, "", doc);
                     }
                 }
@@ -211,10 +234,10 @@ namespace hwutil
                         string dst = GetDestName(src, xsl).Replace("page_", page + "_");
                         Xslt(src, xsl, Path.Combine(res_dir, dst), col);
                     }
-                    string name = Path.GetFileNameWithoutExtension(src);
-                    string in_path = Path.Combine(res_dir, page + "_svg.lst");
-                    string out_path = Path.Combine(dir, name + "_" + page + ".svg");
-                    Format(in_path, out_path);
+                    // string name = Path.GetFileNameWithoutExtension(src);
+                    // string in_path = Path.Combine(res_dir, page + "_svg.lst");
+                    // string out_path = Path.Combine(dir, name + "_" + page + ".svg");
+                    // Format(in_path, out_path);
                 }
             }
         }
