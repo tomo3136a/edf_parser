@@ -34,7 +34,7 @@
         <xsl:for-each select="$header">
             <xsl:sort select="@name"/>
             <xsl:text>,</xsl:text>
-            <xsl:call-template name="_print">
+            <xsl:call-template name="_pprint">
                 <xsl:with-param name="s" select="@name"/>
             </xsl:call-template>
         </xsl:for-each>
@@ -44,7 +44,7 @@
             <xsl:variable name="line" select="."/>
             <xsl:variable name="vwn" select="concat(viewref/cellref/libraryref/@name,
                 '-',viewref/cellref/@name,'-',viewref/@name)"/>
-            <xsl:call-template name="_print">
+            <xsl:call-template name="_pprint">
                 <xsl:with-param name="s" select="@name"/>
             </xsl:call-template>
             <xsl:text>,</xsl:text>
@@ -63,16 +63,16 @@
                 <xsl:for-each select="$line">
                     <xsl:variable name="prop" select="property[@name=$kw]"/>
                     <xsl:text>&quot;</xsl:text>
-                    <xsl:call-template name="_print">
+                    <xsl:call-template name="_pprint">
                         <xsl:with-param name="s" select="normalize-space($prop/number/text())"/>
                     </xsl:call-template>
-                    <xsl:call-template name="_print">
+                    <xsl:call-template name="_pprint">
                         <xsl:with-param name="s" select="normalize-space($prop/integer/text())"/>
                     </xsl:call-template>
-                    <xsl:call-template name="_print">
+                    <xsl:call-template name="_pprint">
                         <xsl:with-param name="s" select="normalize-space($prop/string/text())"/>
                     </xsl:call-template>
-                    <xsl:call-template name="_print">
+                    <xsl:call-template name="_pprint">
                         <xsl:with-param name="s" select="normalize-space($prop/text())"/>
                     </xsl:call-template>
                     <xsl:text>&quot;</xsl:text>
@@ -84,7 +84,7 @@
 
     <xsl:template match="view">
         <xsl:value-of select="@name"/>
-        <xsl:call-template name="_print">
+        <xsl:call-template name="_pprint">
             <xsl:with-param name="s" select="text()"/>
         </xsl:call-template>
     </xsl:template>
@@ -93,14 +93,14 @@
 
     <!--common-->
     <xsl:template match="rename">
-        <xsl:call-template name="_print">
+        <xsl:call-template name="_pprint">
             <xsl:with-param name="s" select="text()"/>
         </xsl:call-template>
     </xsl:template>
 
     <xsl:template match="designator">
         <xsl:if test="string-length(normalize-space(text()))!=0">
-            <xsl:call-template name="_print">
+            <xsl:call-template name="_pprint">
                 <xsl:with-param name="s" select="text()"/>
             </xsl:call-template>
         </xsl:if>
@@ -108,7 +108,7 @@
     </xsl:template>
 
     <xsl:template match="stringdisplay">
-        <xsl:call-template name="_print">
+        <xsl:call-template name="_pprint">
             <xsl:with-param name="s" select="text()"/>
         </xsl:call-template>
     </xsl:template>

@@ -36,19 +36,19 @@
         </xsl:call-template>
         <xsl:text>,</xsl:text>
         <xsl:call-template name="_pt">
-            <xsl:with-param name="pt" select="boundbox/rectangle/pt[1]"/>
+            <xsl:with-param name="pt" select="boundingbox/rectangle/pt[1]"/>
         </xsl:call-template>
         <xsl:text>,</xsl:text>
         <xsl:call-template name="_pt">
-            <xsl:with-param name="pt" select="boundbox/rectangle/pt[2]"/>
+            <xsl:with-param name="pt" select="boundingbox/rectangle/pt[2]"/>
         </xsl:call-template>
         <xsl:text>&#10;</xsl:text>
     </xsl:template>
     <xsl:template name="_pt">
         <xsl:param name="pt" select="true()"/>
-        <xsl:value-of select="substring-before(',',$pt)"/>
+        <xsl:value-of select="substring-before($pt,' ')"/>
         <xsl:text>,</xsl:text>
-        <xsl:value-of select="substring-after(',',$pt)"/>
+        <xsl:value-of select="substring-after($pt,' ')"/>
     </xsl:template>
     
 </xsl:stylesheet>

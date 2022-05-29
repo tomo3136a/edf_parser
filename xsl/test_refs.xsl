@@ -1,4 +1,10 @@
 <?xml version="1.0"?>
+<!--
+    edif2xml.exe test.edif xsl/test_refs.xsl @refs=data.txt
+    1. test.edif ƒtƒ@ƒCƒ‹‚ð“Ç‚Ýž‚Ý
+    2. test_refs.xsl ‚Å•ÏŠ·
+    3. 
+-->
 <xsl:stylesheet version="1.0"
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
     <xsl:output method="text"/>

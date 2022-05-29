@@ -4,7 +4,7 @@
     <xsl:import href="common.xsl"/>
     <xsl:output method="text"/>
     <xsl:template match="/">
-        <xsl:text>library,cell,view,page,instance,name,lref,cref,vref,desinator,pt,rot</xsl:text>
+        <xsl:text>library,cell,view,page,instance,name,@name,lref,cref,vref,desinator,pt,rot</xsl:text>
         <xsl:text>&#10;</xsl:text>
         <xsl:apply-templates select="edif/library/cell/view/contents//instance"/>
     </xsl:template>
@@ -19,13 +19,13 @@
         <xsl:text>,</xsl:text>
         <xsl:value-of select="@name"/>
         <xsl:text>,</xsl:text>
+        <xsl:apply-templates select="." mode="_name"/>
+        <xsl:text>,</xsl:text>
         <xsl:value-of select="viewref/cellref/libraryref/@name"/>
         <xsl:text>,</xsl:text>
         <xsl:value-of select="viewref/cellref/@name"/>
         <xsl:text>,</xsl:text>
         <xsl:value-of select="viewref/@name"/>
-        <xsl:text>,</xsl:text>
-        <xsl:apply-templates select="." mode="_name"/>
         <xsl:text>,</xsl:text>
         <xsl:apply-templates select="designator" mode="_designator"/>
         <xsl:text>,</xsl:text>

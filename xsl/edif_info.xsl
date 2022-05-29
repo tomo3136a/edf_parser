@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <xsl:stylesheet version="1.0"
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+    <xsl:import href="common.xsl"/>
     <xsl:output method="text"/>
 
     <!--root/edif/library/external/cell/view-->
@@ -179,8 +180,8 @@
     </xsl:template>
 
     <!--common function-->
-    <xsl:template name="_name">
-        <xsl:call-template name="_print">
+    <!-- <xsl:template name="_name">
+        <xsl:call-template name="_pprint">
             <xsl:with-param name="s">
                 <xsl:choose>
                     <xsl:when test="count(rename)!=0">
@@ -195,7 +196,7 @@
     </xsl:template>
 
     <xsl:template name="_value">
-        <xsl:call-template name="_print">
+        <xsl:call-template name="_pprint">
             <xsl:with-param name="s">
                 <xsl:value-of select="string/text()"/>
                 <xsl:value-of select="integer/text()"/>
@@ -204,7 +205,7 @@
         </xsl:call-template>
     </xsl:template>
 
-    <xsl:template name="_print">
+    <xsl:template name="_pprint">
         <xsl:param name="s"/>
         <xsl:variable name="s2">
             <xsl:if test="not (starts-with($s,'&amp;'))">
@@ -214,6 +215,6 @@
         </xsl:variable>
         <xsl:variable name="s3" select="translate($s2,'&quot;','')"/>
         <xsl:value-of select="$s3" disable-output-escaping="yes"/>
-    </xsl:template>
+    </xsl:template> -->
 
 </xsl:stylesheet>
