@@ -221,6 +221,21 @@ namespace hwutils
             set { src2Box.Text = value; }
         }
 
+        public string Xsl {
+            get { return xslBox.Text; }
+            set { xslBox.Text = value; }
+        }
+
+        public string Key1 {
+            get { return kyBox[0].Text; }
+            set { kyBox[0].Text = value; }
+        }
+
+        public string Data1 {
+            get { return dtBox[0].Text; }
+            set { dtBox[0].Text = value; }
+        }
+
         string src_flt = "source files (*.edf;*.edif;*.xedf)|*.edf;*.edif;*.xedf" + 
             "|edif files (*.edf;*.edif)|*.edf;*.edif" + "|xml edif files (*.xedf)|*.xedf"+ 
             "|xml files (*.xml)|*.xml" + "|All files (*.*)|*.*";

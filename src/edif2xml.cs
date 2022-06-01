@@ -170,11 +170,30 @@ namespace hwutils
                         string title = "edif2xml";
                         string text = "??";
                         SetupDialog dlg = new SetupDialog(text, title);
+                        if (src_lst.Count > 0) dlg.Source1 = src_lst[0];
+                        if (src_lst.Count > 1) dlg.Source2 = src_lst[1];
+                        if (xsl_lst.Count > 0) dlg.Xsl = xsl_lst[0];
+                        foreach (var k in col.Keys) {
+                            dlg.Key1 = k;
+                            dlg.Data1 = col[k];
+                        }
                         // dlg.Value = tag;
                         if (dlg.ShowDialog() == DialogResult.OK)
                         {
-                            string src1 = dlg.Source1;
-                            string src2 = dlg.Source2;
+                            string src1 = dlg.Source1 ?? "";
+                            string src2 = dlg.Source2 ?? "";
+                            if (src1.Length > 0) src_lst.Add(src1);
+                            if (src2.Length > 0) src_lst.Add(src2);
+                            string f = dlg.Xsl ?? "";
+                            if (f.Length > 0) xsl_lst.Add(f);
+                            string k = dlg.Key1 ?? "";
+                            string d = dlg.Data1 ?? "";
+                            if (k.Length > 0) {
+                                if (col.ContainsKey(k)){
+                                    col.Remove(k);
+                                }
+                                col.Add(k,d);
+                            }
                         }
                     }
                 }
