@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <!--
     edif2xml.exe test.edif xsl/test_refs.xsl @refs=data.txt
-    1. test.edif ƒtƒ@ƒCƒ‹‚ð“Ç‚Ýž‚Ý
-    2. test_refs.xsl ‚Å•ÏŠ·
+    1. test.edif ãƒ•ã‚¡ã‚¤ãƒ«ã‚’èª­ã¿è¾¼ã¿
+    2. test_refs.xsl ã§å¤‰æ›
     3. 
 -->
 <xsl:stylesheet version="1.0"
