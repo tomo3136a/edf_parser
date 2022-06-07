@@ -14,7 +14,7 @@ namespace hwutils
     /////////////////////////////////////////////////////////////////////
     // dialog
 
-    public class SetupDialog : Form
+    public class SettingDialog : Form
     {
         Button accept = new Button();
         Button cancel = new Button();
@@ -33,7 +33,7 @@ namespace hwutils
         Button[] dtBtn = new Button[4];
         TextBox textBox = new TextBox();
 
-        public SetupDialog(string caption)
+        public SettingDialog(string caption)
         {
             int width = 500;
             int height = 360;
@@ -207,14 +207,12 @@ namespace hwutils
 
         List<string> src_lst = null;
         List<string> xsl_lst = null;
-        List<string> opt_lst = null;
         Dictionary<string, string> col = null;
 
-        public bool SetUp(List<string> src_lst, List<string> xsl_lst, List<string> opt_lst, Dictionary<string, string> col)
+        public bool SetData(List<string> src_lst, List<string> xsl_lst, Dictionary<string, string> col)
         {
             this.src_lst = src_lst;
             this.xsl_lst = xsl_lst;
-            this.opt_lst = opt_lst;
             this.col = col;
             if (src_lst.Count > 0) src1Box.Text = src_lst[0];
             if (src_lst.Count > 1) src2Box.Text = src_lst[1];
@@ -251,6 +249,38 @@ namespace hwutils
             "|xml files (*.xml)|*.xml" + "|All files (*.*)|*.*";
         string xsl_flt = "xsl files (*.xsl)|*.xsl";
         string txt_flt = "text files (*.txt)|*.txt" + "|All files (*.*)|*.*";
+
+        // OpenFileDialog openFileDialog1 = new OpenFileDialog();
+
+        public void testDlg()
+        {
+            var fileContent = string.Empty;
+            var filePath = string.Empty;
+
+            using (OpenFileDialog openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.InitialDirectory = "c:\\";
+                openFileDialog.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
+                openFileDialog.FilterIndex = 2;
+                openFileDialog.RestoreDirectory = true;
+
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    //Get the path of specified file
+                    filePath = openFileDialog.FileName;
+
+                    //Read the contents of the file into a stream
+                    var fileStream = openFileDialog.OpenFile();
+
+                    using (StreamReader reader = new StreamReader(fileStream))
+                    {
+                        fileContent = reader.ReadToEnd();
+                    }
+                }
+            }
+            MessageBox.Show(fileContent, "File Content at path: " + filePath, MessageBoxButtons.OK);
+        }
+
 
         bool select_source(TextBox tb, string flt)
         {
@@ -305,33 +335,4 @@ namespace hwutils
             select_source(this.dtBox[3], txt_flt);
         }
     }
-
-    public class ControlWriter : TextWriter
-    {
-        private Control textbox;
-        public ControlWriter(Control textbox)
-        {
-            this.textbox = textbox;
-        }
-
-        public override void Write(char value)
-        {
-            textbox.Text += value;
-        }
-
-        public override void Write(string value)
-        {
-            textbox.Text += value;
-        }
-
-        public override Encoding Encoding
-        {
-            get { return Encoding.ASCII; }
-        }
-    }
-
-    // public void set_console()
-    // {
-    //     Console.SetOut(new ControlWriter(textBox));
-    // }
 }
