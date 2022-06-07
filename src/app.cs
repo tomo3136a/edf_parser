@@ -110,12 +110,12 @@ namespace hwutils
             Console.WriteLine(" : "+tm.ElapsedMilliseconds+"ms");
         }
 
-        // public void Format(string src, string dst)
-        //   {
-        //     XmlDocument doc = new XmlDocument();
-        //     doc.Load(src);
-        //     doc.Save(dst);
-        // }
+        public void Format(string src, string dst)
+          {
+            XmlDocument doc = new XmlDocument();
+            doc.Load(src);
+            doc.Save(dst);
+        }
 
         public void Execute(string src, Dictionary<string, string> col)
         {
@@ -147,10 +147,10 @@ namespace hwutils
                     string dst = GetDestName(src, xsl).Replace("page_", page + "_");
                     Xslt(src, xsl, Path.Combine(res_dir, dst), col);
                 }
-                // string name = Path.GetFileNameWithoutExtension(src);
-                // string in_path = Path.Combine(res_dir, page + "_svg.lst");
-                // string out_path = Path.Combine(dir, name + "_" + page + ".svg");
-                // Format(in_path, out_path);
+                string name = Path.GetFileNameWithoutExtension(src);
+                string in_path = Path.Combine(res_dir, page + "_svg.lst");
+                string out_path = Path.Combine(dir, name + "_" + page + ".svg");
+                if (File.Exists(in_path)) Format(in_path, out_path);
             }
         }
 
@@ -212,7 +212,7 @@ namespace hwutils
                 string src = arg + ".xml";
                 if (arg.Contains(".edf")){ src = arg.Replace(".edf", ".xedf"); }
                 if (arg.Contains(".edif")){ src = arg.Replace(".edif", ".xedf"); }
-                Console.WriteLine(">" + Path.GetFileName(arg));
+                Console.WriteLine("source: " + Path.GetFileName(arg));
                 if (arg.Contains(".xedf")){ src = arg; }
                 else if (!Edif2Xml(arg, src)) {
                     MsgBox.Show("not find: " + arg);
