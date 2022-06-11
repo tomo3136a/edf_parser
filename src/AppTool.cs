@@ -103,20 +103,23 @@ namespace hwutils
             foreach (string k in Directory.EnumerateFiles(xsl_dir, "edif_*.xsl"))
             {
                 string xsl = Path.Combine(xsl_dir, k);
-                string dst = Path.Combine(out_dir, GetDestName(src, xsl));
-                Xslt(src, xsl, dst, col);
+                string dst = GetDestName(src, xsl);
+                Xslt(src, xsl, Path.Combine(out_dir, dst), col);
             }
 
-            string lst = Path.Combine(out_dir, "edif_page.lst");
-            if (!File.Exists(lst)) return;
-            foreach (string page in File.ReadAllLines(lst)) {
-                col = new Dictionary<string, string>() { };
-                col.Add("page", page);
-                foreach (string k in Directory.EnumerateFiles(xsl_dir, "page_*.xsl"))
-                {
-                    string xsl = Path.Combine(xsl_dir, k);
-                    string dst = GetDestName(src, xsl).Replace("page_", page + "_");
-                    Xslt(src, xsl, Path.Combine(out_dir, dst), col);
+            string[] sub = new string[]{"page"};
+            foreach (string grp in sub){
+                string lst = Path.Combine(out_dir, "edif_"+grp+".lst");
+                if (!File.Exists(lst)) return;
+                foreach (string id in File.ReadAllLines(lst)) {
+                    if (col.ContainsKey(grp)) col.Remove(grp);
+                    col.Add(grp, id);
+                    foreach (string k in Directory.EnumerateFiles(xsl_dir, grp+"_*.xsl"))
+                    {
+                        string xsl = Path.Combine(xsl_dir, k);
+                        string dst = GetDestName(src, xsl).Replace(grp + "_", id + "_");
+                        Xslt(src, xsl, Path.Combine(out_dir, dst), col);
+                    }
                 }
             }
         }
