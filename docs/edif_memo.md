@@ -332,8 +332,8 @@ use : netGroup, netMap, event, netBackAnnotate
 figure の nameRef で指定した figureGroup の設定を引き継ぐ。さらに部分的に設定を変更する場合は、 figureGroupOverride で上書きする。
 
     (figure [nameRef]/(FigureGroupoverride ...)
-        (dot (pt 0 0) (property)...)                            # 点
         (circle (pt 0 0) (pt 0 0) (property ...)...)            # 二点間を直径とした円
+        (dot (pt 0 0) (property ...)...)                        # 点
         (path (pointList (pt 0 0)...) (property ...)...)        # pointList の各点を順番に直線で接続
         (polygon (pointList (pt 0 0)...) (property ...)...)     # pointList の各点を順番に直線で接続し最後と最初の点も接続
         (rectangle (pt 0 0) (pt 0 0) (property)...)             # 2点を対角とした四角形
@@ -499,7 +499,7 @@ nameRef:
 
 ## net
 
-    (net [nameDef]
+    (net [nameDef]          #ネット名
         (joined)
         (criticality)
         (netDelay)
@@ -509,6 +509,15 @@ nameRef:
         (commonGraphics)
         (property)
     )
+
+## joined
+
+    (joined
+        (portRef [NameDef] (instanceRef [NameDef]))...
+        (portList)...
+        (globalPortRef)...
+    )... 
+
 
     (instanceRef "" (InstanceRef)? (viewRef)?)
     (netRef "" (netRef)? (instanceRef)? (viewRef)?)

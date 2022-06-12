@@ -1,5 +1,10 @@
 # XFDFファイルフォーマット
 
+## 概要
+
+XFDF ファイルは、 FDF ファイルの XML ファイル版である。
+フォームデータと注釈を保存する。
+
 ## 拡張子
 
 `.xfdf`
@@ -11,8 +16,10 @@
     <xfdf xmlns="http://ns.adobe.com/xfdf/" xml:space="preserve">
         <annots>
             <square width="9.000000" color="#E52237" opacity="0.494995"
-                creationdate="D:20211219185715+09'00'" flags="print" interior-color="#FFAABF" 
-                date="D:20211219191624+09'00'" name="f4873cca-4d0f-47fb-8be9-ded59e5dabaa"
+                creationdate="D:20211219185715+09'00'" flags="print"
+                interior-color="#FFAABF" 
+                date="D:20211219191624+09'00'"
+                name="f4873cca-4d0f-47fb-8be9-ded59e5dabaa"
                 page="0" fringe="4.500000,4.500000,4.500000,4.500000" 
                 rect="0.500000,1.500000,611.500000,791.500000" 
                 subject="長方形" title="tomo3">
@@ -28,8 +35,6 @@
 
 ## ルート
 
-XFDF ファイルは、 FDF ファイルの XML ファイル版である。
-
 ```xml
     <?xml version="1.0" encoding="UTF-8"?>
     <xfdf xmlns="http://ns.adobe.com/xfdf/" xml:space="preserve">
@@ -41,8 +46,8 @@ XFDF ファイルは、 FDF ファイルの XML ファイル版である。
 ```
 
 * rootは、`<xfdf xmlns="http://ns.adobe.com/xfdf/" xml:space="preserve">`とする
-* `<f href="...">` および `<ids original="..." modified="...">` 元のpdfファイルへのリンク情報。
-  無くてもよい
+* `<f href="...">` はpdfファイルへのリンク。無くてもよい。
+* `<ids original="..." modified="...">` はpdfファイルへのリンク情報。無くてもよい。
 * `<xfdf ...>`の下にフォーム`<fields>`やコメント`<annots>`を配置する。
 
 ## フォームデータ
@@ -484,13 +489,14 @@ XFDF ファイルは、 FDF ファイルの XML ファイル版である。
 | A2  | 420mm x 594mm  | 1191pt x 1684pt |
 
 840x1189 [math]::pow(2,(-2*0-1)/4)  [math]::pow(2,(-2*0+1)/4)
+
 595x840  [math]::pow(2,(-2*1-1)/4)  [math]::pow(2,(-2*1+1)/4)
 
 
 ## 日付
 
 `date`属性と`createdate`属性は、日付を指定する。\
-`2021年12月19日 19時16分24秒 +09:00`は、`"D:20211219191624+09'00'"` で表す。\
+`2021年12月19日 19時16分24秒 +09:00`は、`"D:20211219191624+09'00'"` で表す。
 
 ## 状態
 
