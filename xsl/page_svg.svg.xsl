@@ -2,6 +2,7 @@
 <xsl:stylesheet version="1.0"
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
     xmlns="http://www.w3.org/2000/svg">
+    <xsl:import href="common.xsl"/>
     <xsl:output method="xml" media-type="text/xsl" indent="yes"/>
     <xsl:param name="page"/>
 
@@ -678,11 +679,11 @@
     <!--display-->
     <xsl:template match="name">
         <xsl:variable name="s" select="../@name"/>
-        <xsl:if test="not (count(display)=0)">
+        <!-- <xsl:if test="not (count(display)=0)">
             <xsl:message>
                 <xsl:value-of select="concat('###',$s)"/>
             </xsl:message>
-        </xsl:if>
+        </xsl:if> -->
         <xsl:apply-templates select="display">
             <xsl:with-param name="s" select="$s"/>
         </xsl:apply-templates>
@@ -734,9 +735,9 @@
         </xsl:variable>
         <xsl:if test="concat('',$visible)">
             <xsl:if test="string-length(normalize-space(translate($s,'&quot;','')))!=0">
-                <xsl:message>
+                <!-- <xsl:message>
                     <xsl:value-of select="concat('-',$fg_name,'-',$visible,'-',normalize-space(translate($s,'&quot;','')))"/>
-                </xsl:message>
+                </xsl:message> -->
                 <text fill="blue" stroke-width="0" font-size="19">
                     <xsl:for-each select="$fg">
                         <xsl:call-template name="_fg_font"/>
@@ -930,8 +931,8 @@
     </xsl:template>
 
     <!--common function-->
-    <xsl:template name="_name">
-        <xsl:call-template name="_print">
+    <!-- <xsl:template name="_name">
+        <xsl:call-template name="_pprint">
             <xsl:with-param name="s">
                 <xsl:choose>
                     <xsl:when test="count(rename)!=0">
@@ -946,7 +947,7 @@
     </xsl:template>
 
     <xsl:template name="_value">
-        <xsl:call-template name="_print">
+        <xsl:call-template name="_pprint">
             <xsl:with-param name="s">
                 <xsl:value-of select="string/text()"/>
                 <xsl:value-of select="integer/text()"/>
@@ -955,7 +956,7 @@
         </xsl:call-template>
     </xsl:template>
 
-    <xsl:template name="_print">
+    <xsl:template name="_pprint">
         <xsl:param name="s"/>
         <xsl:variable name="s2">
             <xsl:if test="not (starts-with($s,'&amp;'))">
@@ -965,6 +966,6 @@
         </xsl:variable>
         <xsl:variable name="s3" select="translate($s2,'&quot;','')"/>
         <xsl:value-of select="$s3" disable-output-escaping="yes"/>
-    </xsl:template>
+    </xsl:template> -->
 
 </xsl:stylesheet>

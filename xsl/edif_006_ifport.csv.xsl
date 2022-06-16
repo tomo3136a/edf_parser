@@ -4,7 +4,7 @@
     <xsl:import href="common.xsl"/>
     <xsl:output method="text"/>
     <xsl:template match="/">
-        <xsl:text>library,cell,view,port,name,desinator</xsl:text>
+        <xsl:text>library,cell,view,port,name,desinator,property#</xsl:text>
         <xsl:text>&#10;</xsl:text>
         <xsl:apply-templates select="edif/library/cell/view/interface/port"/>
     </xsl:template>
@@ -20,6 +20,8 @@
         <xsl:apply-templates select="." mode="_name"/>
         <xsl:text>,</xsl:text>
         <xsl:value-of select="designator"/>
+        <xsl:text>,</xsl:text>
+        <xsl:value-of select="count(property)"/>
         <xsl:text>&#10;</xsl:text>
     </xsl:template>
 </xsl:stylesheet>

@@ -115,7 +115,8 @@
 
     <xsl:template match="property">
         <xsl:text>&#32;</xsl:text>
-        <xsl:call-template name="_name"/>
+        <xsl:apply-templates select="." mode="_name"/>
+        <!-- <xsl:call-template name="_name"/> -->
         <xsl:text>=</xsl:text>
         <xsl:call-template name="_value"/>
     </xsl:template>

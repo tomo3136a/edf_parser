@@ -52,19 +52,4 @@
         <xsl:text>&quot;</xsl:text>
     </xsl:template>
 
-    <xsl:template name="_name">
-        <xsl:call-template name="_pprint">
-            <xsl:with-param name="s">
-                <xsl:choose>
-                    <xsl:when test="count(rename)!=0">
-                        <xsl:value-of select="rename/text()"/>
-                    </xsl:when>
-                    <xsl:otherwise>
-                        <xsl:value-of select="@name"/>
-                    </xsl:otherwise>
-                </xsl:choose>
-            </xsl:with-param>
-        </xsl:call-template>
-    </xsl:template>
-
 </xsl:stylesheet>

@@ -17,7 +17,8 @@
 
     <xsl:template match="design">
         <xsl:text>トップデザイン：</xsl:text>
-        <xsl:call-template name="_name"/>
+        <xsl:apply-templates select="." mode="_name"/>
+        <!-- <xsl:call-template name="_name"/> -->
         <xsl:text>&#32;&#32;</xsl:text>
         <xsl:value-of select="cellref/libraryref/@name"/>
         <xsl:text>-</xsl:text>
@@ -28,7 +29,8 @@
 
     <xsl:template match="library|external">
         <xsl:text>ライブラリ：</xsl:text>
-        <xsl:call-template name="_name"/>
+        <xsl:apply-templates select="." mode="_name"/>
+        <!-- <xsl:call-template name="_name"/> -->
         <xsl:apply-templates select="property"/>
         <xsl:text>&#10;</xsl:text>
         <xsl:apply-templates select="technology"/>
@@ -44,14 +46,16 @@
 
     <xsl:template match="figuregroup">
         <xsl:text>&#32;&#32;グループ：</xsl:text>
-        <xsl:call-template name="_name"/>
+        <xsl:apply-templates select="." mode="_name"/>
+        <!-- <xsl:call-template name="_name"/> -->
         <xsl:apply-templates select="property"/>
         <xsl:text>&#10;</xsl:text>
     </xsl:template>
 
     <xsl:template match="cell">
         <xsl:text>&#32;&#32;セル：</xsl:text>
-        <xsl:call-template name="_name"/>
+        <xsl:apply-templates select="." mode="_name"/>
+        <!-- <xsl:call-template name="_name"/> -->
         <xsl:apply-templates select="property"/>
         <xsl:text>&#10;</xsl:text>
         <xsl:apply-templates select="view"/>
@@ -59,7 +63,8 @@
 
     <xsl:template match="view">
         <xsl:text>&#32;&#32;&#32;&#32;ビュー：</xsl:text>
-        <xsl:call-template name="_name"/>
+        <xsl:apply-templates select="." mode="_name"/>
+        <!-- <xsl:call-template name="_name"/> -->
         <xsl:text>&#32;</xsl:text>
         <xsl:variable name="id" select="concat(../../@name,'-',../@name,'-',@name)"/>
         <xsl:apply-templates select="property"/>
@@ -88,7 +93,8 @@
 
     <xsl:template match="page">
         <xsl:text>&#32;(ページ&#32;</xsl:text>
-        <xsl:call-template name="_name"/>
+        <xsl:apply-templates select="." mode="_name"/>
+        <!-- <xsl:call-template name="_name"/> -->
         <xsl:text>)</xsl:text>
         <xsl:apply-templates select="property"/>
         <xsl:text>&#10;</xsl:text>
@@ -99,7 +105,8 @@
     <!--interface-->
     <xsl:template match="port">
         <xsl:text>&#32;ポート：</xsl:text>
-        <xsl:call-template name="_name"/>
+        <xsl:apply-templates select="." mode="_name"/>
+        <!-- <xsl:call-template name="_name"/> -->
         <xsl:apply-templates select="designator"/>
         <xsl:apply-templates select="property"/>
         <xsl:text>&#10;</xsl:text>
@@ -107,7 +114,8 @@
 
     <xsl:template match="symbol">
         <xsl:text>&#32;シンボル：</xsl:text>
-        <xsl:call-template name="_name"/>
+        <xsl:apply-templates select="." mode="_name"/>
+        <!-- <xsl:call-template name="_name"/> -->
         <xsl:apply-templates select="designator"/>
         <xsl:apply-templates select="property"/>
         <xsl:text>&#10;</xsl:text>
@@ -116,7 +124,8 @@
 
     <xsl:template match="portimplementation">
         <xsl:text>&#32;&#32;ポート実装：</xsl:text>
-        <xsl:call-template name="_name"/>
+        <xsl:apply-templates select="." mode="_name"/>
+        <!-- <xsl:call-template name="_name"/> -->
         <xsl:apply-templates select="designator"/>
         <xsl:apply-templates select="property"/>
         <xsl:text>&#10;</xsl:text>
@@ -125,7 +134,8 @@
     <!--contents/page-->
     <xsl:template match="instance">
         <xsl:text>&#32;&#32;部品：</xsl:text>
-        <xsl:call-template name="_name"/>
+        <xsl:apply-templates select="." mode="_name"/>
+        <!-- <xsl:call-template name="_name"/> -->
         <xsl:apply-templates select="designator"/>
         <xsl:apply-templates select="property"/>
         <xsl:text>&#10;</xsl:text>
@@ -134,7 +144,8 @@
 
     <xsl:template match="portinstance">
         <xsl:text>&#32;&#32;&#32;&#32;部品ポート：</xsl:text>
-        <xsl:call-template name="_name"/>
+        <xsl:apply-templates select="." mode="_name"/>
+        <!-- <xsl:call-template name="_name"/> -->
         <xsl:apply-templates select="designator"/>
         <xsl:apply-templates select="property"/>
         <xsl:text>&#10;</xsl:text>
@@ -142,7 +153,8 @@
 
     <xsl:template match="net">
         <xsl:text>&#32;&#32;&#32;&#32;ネット：</xsl:text>
-        <xsl:call-template name="_name"/>
+        <xsl:apply-templates select="." mode="_name"/>
+        <!-- <xsl:call-template name="_name"/> -->
         <xsl:apply-templates select="designator"/>
         <xsl:apply-templates select="property"/>
         <xsl:text>&#10;</xsl:text>
@@ -151,7 +163,8 @@
 
     <xsl:template match="array">
         <xsl:text>&#32;&#32;&#32;&#32;バス：</xsl:text>
-        <xsl:call-template name="_name"/>
+        <xsl:apply-templates select="." mode="_name"/>
+        <!-- <xsl:call-template name="_name"/> -->
         <xsl:apply-templates select="designator"/>
         <xsl:apply-templates select="property"/>
         <xsl:text>&#10;</xsl:text>
@@ -160,7 +173,8 @@
     <!--common-->
     <xsl:template match="name">
         <xsl:text>&#32;name[</xsl:text>
-        <xsl:call-template name="_name"/>
+        <xsl:apply-templates select="." mode="_name"/>
+        <!-- <xsl:call-template name="_name"/> -->
         <xsl:text>]</xsl:text>
     </xsl:template>
 
@@ -174,7 +188,8 @@
 
     <xsl:template match="property">
         <xsl:text>&#32;</xsl:text>
-        <xsl:call-template name="_name"/>
+        <xsl:apply-templates select="." mode="_name"/>
+        <!-- <xsl:call-template name="_name"/> -->
         <xsl:text>=</xsl:text>
         <xsl:call-template name="_value"/>
     </xsl:template>
