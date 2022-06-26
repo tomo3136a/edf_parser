@@ -72,7 +72,8 @@ namespace hwutils
             {
                 Console.WriteLine("source: " + Path.GetFileName(arg));
                 string src = arg;
-                if (arg.EndsWith(".edf") || arg.EndsWith(".edif")) {
+                string s = arg.ToLower();
+                if (s.EndsWith(".edf") || s.EndsWith(".edif")) {
                     src = Path.ChangeExtension(arg, ".xedf");
                     if (!Edif2Xml(arg, src)) {
                         MessageBox.Show("not find: " + arg);
