@@ -20,12 +20,14 @@ namespace hwutils
         {
             bool res = true;
             if(File.GetLastWriteTime(src) > File.GetLastWriteTime(dst)) {
+                string s = Path.GetFileNameWithoutExtension(src);
+                Console.Write(":edif2xml: "+s);
                 var tm = new System.Diagnostics.Stopwatch();
                 tm.Start();
                 res = edifxml.Execute(src, dst);
                 tm.Stop();
-                string s = Path.GetFileNameWithoutExtension(src);
-                Console.WriteLine(":edif2xml: "+s+" : "+tm.ElapsedMilliseconds+"ms");
+                Console.WriteLine(" : "+tm.ElapsedMilliseconds+"ms");
+                //Console.WriteLine(":edif2xml: "+s+" : "+tm.ElapsedMilliseconds+"ms");
             }
             return res;
         }
