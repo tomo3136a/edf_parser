@@ -11,11 +11,11 @@ namespace hwutils
     {
         readonly string[] nms = {
             "edif", "design", "external", "library", "cell", "view", "page",
-            "instance", "portInstance", "port", "portBundle", "portListAlias",
-            "portImplementation",
-            "viewRef", "portRef", "instanceRef", "cellRef", "libraryRef",
-            "figureGroup", "figureGroupOverride", "figure", "offpageConnector",
-            "net", "netBundle", "property", "parameter", "display", "keywordDisplay"
+            "instance", "portinstance", "port", "portbundle", "portlistalias",
+            "portimplementation",
+            "viewref", "portref", "instanceref", "cellref", "libraryref",
+            "figuregroup", "figuregroupOverride", "figure", "offpageconnector",
+            "net", "netbundle", "property", "parameter", "display", "keyworddisplay"
         };
         readonly string[] sns = { "name", "rename" };
         readonly Dictionary<string, string> nm = new Dictionary<string, string>();
@@ -93,6 +93,7 @@ namespace hwutils
                                 break;
                         }
                     if (seq == TK.STR) { s += '\n'; }
+                    if (seq == TK.EXP) { s = Parse(s); }
                 }
                 Parse(s);
             }
