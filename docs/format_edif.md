@@ -401,8 +401,6 @@ figureGroup の名前は、ツール依存であるが、主に以下がある。
 
 `cell` のインターフェースを定義する。
 
-
-
 ```lisp
     (interface                                  # interface の定義
         (port ...)...
@@ -418,9 +416,8 @@ figureGroup の名前は、ツール依存であるが、主に以下がある。
         (joined (portRef)... (portList)... (globalPortRef)...)... 
         (weakJoined (portRef)... (portList)... (joined)...)... 
         (mustJoin (portRef)... (portList)... (weakJoined)... (joined)...)... 
-            (permutable ...)... 
-            (timing ...)... (simurate ...)... 
-        )
+        (permutable ...)... 
+        (timing ...)... (simurate ...)... 
     )
 ```
 
@@ -440,7 +437,7 @@ figureGroup の名前は、ツール依存であるが、主に以下がある。
             (netBundle ...)
             (commentgraphics ...)
             (portimplementation ...)
-            (boundBox (rectangle (pt) (pt)))...
+            (boundingBox (rectangle (pt) (pt)))...
         )...
     )...
 ```
@@ -455,7 +452,7 @@ figureGroup の名前は、ツール依存であるが、主に以下がある。
         (netBundle ...)...
         (commentGraphics ...)...
         (portimplementation)...
-        (boundBox (rectangle (pt) (pt)))...
+        (boundingBox (rectangle (pt) (pt)))...
     )...
 ```
 
@@ -475,7 +472,7 @@ figureGroup の名前は、ツール依存であるが、主に以下がある。
             (property...)
         )...
         (portimplementation)...
-        (boundBox (rectangle (pt) (pt)))...
+        (boundingBox (rectangle (pt) (pt)))...
         (timing ...)... (simulate ...)... (when ...)...
         (follow ...)... (logicPort ...)...
     )...
@@ -606,6 +603,20 @@ figureGroup の属性の一部を上書きした属性を適用対象にする。
 
 ---
 
+## commentGraphics
+
+コメント図形を定義する。
+
+```lisp
+    (commentGraphics
+        (figure ...)...
+        (instance ...)...
+        (annotate ....)...
+        (boundingBox ...)
+        (property ...)...
+    )
+```
+
 ## symbol
 
 シンボルの図
@@ -618,59 +629,10 @@ figureGroup の属性の一部を上書きした属性を適用対象にする。
         (commentGraphics)
         (annotate)
         (pageSize)
-        (boundBox)
+        (boundingBox)
         (propertyDisplay)
         (KeywordDisplay)
         (ParameterDisplay)
-        (Property)
-    )
-```
-
-## port
-
-ポートの定義
-
-```lisp
-    (port ""
-        (direction INOUT/INPUT/OUTPUT)
-        (unused)
-        (portDelay ...)
-        (designator ""/(strDisplay))
-        (DcFanInLoad) (DcFanOutLoad) (DcMaxFanIn) (DcMaxFanOut) (AcLoad)
-        (Property)...
-    )
-
-    (portBundle ""
-        (listOfPorts (port)... (portBundle)...)
-        (Property)...
-    )
-```
-
-ポートの実装
-
-```lisp
-    (portImplementation
-        (Name)/[Ident]
-        (figure)
-        (connectLocation)
-        (instance)
-        (commentGraphics)
-        (propertyDisplay)
-        (KeywordDisplay)
-        (Property)
-    )
-```
-
-```lisp
-    (protectionFrame
-        (portImplementation)...
-        (figure)
-        (instance)
-        (commentGraphics)
-        (boundBox)
-        (PropDisp) 
-        (KeywordDisplay) 
-        (parameterDisplay [nameRef] (display)) 
         (Property)
     )
 ```
@@ -738,22 +700,39 @@ nameRef:
     )
 ```
 
-## net
+---
+
+## net / netBundle
+
+use: `page`, `contents`
+
+ネットを定義する。
 
 ```lisp
-    (net [nameDef]          #ネット名
+    (net [nameDef]              #ネット名
         (joined)
-        (criticality)
-        (netDelay)
-        (figure)
-        (net)
-        (instance)
-        (commonGraphics)
-        (property)
+        (criticality)...
+        (netDelay)...
+        (net)...
+        (instance)...
+        (figure)...
+        (commonGraphics)...
+        (property)...
+    )
+
+    (netBundle [nameDef]        #ネットバンドル名
+        (listOfNets (net)...)
+        (figure)...
+        (commentGraphics)...
+        (property)...
     )
 ```
 
 ## joined
+
+use: `interface`, `net`
+
+ポート間のつながりを指定する。
 
 ```lisp
     (joined
@@ -762,7 +741,64 @@ nameRef:
         (globalPortRef)...
     )... 
 
+    (weakJoined (portRef)... (portList)... (joined)...)
+    (mustJoin (portRef)... (portList)... (weakJoined)... (joined)...)
+```
 
+## port
+
+ポートの定義
+
+```lisp
+    (port ""
+        (direction INOUT/INPUT/OUTPUT)
+        (unused ...)
+        (portDelay ...)
+        (designator ""/(strDisplay))
+        (DcFanInLoad) (DcFanOutLoad) (DcMaxFanIn) (DcMaxFanOut) (AcLoad)
+        (Property ...)...
+    )
+```
+
+```lisp
+    (portBundle ""
+        (listOfPorts (port ...)... (portBundle ...)...)
+        (Property ...)...
+    )
+```
+
+ポートの実装
+
+```lisp
+    (portImplementation
+        (Name)/[Ident]
+        (figure)
+        (connectLocation)
+        (instance)
+        (commentGraphics)
+        (propertyDisplay)
+        (KeywordDisplay)
+        (Property)
+    )
+```
+
+---
+
+```lisp
+    (protectionFrame
+        (portImplementation)...
+        (figure)
+        (instance)
+        (commentGraphics)
+        (boundingBox)
+        (PropDisp) 
+        (KeywordDisplay) 
+        (parameterDisplay [nameRef] (display)) 
+        (Property)
+    )
+```
+
+```lisp
     (instanceRef "" (InstanceRef)? (viewRef)?)
     (netRef "" (netRef)? (instanceRef)? (viewRef)?)
     (portRef "" (portRef)? (instanceRef)? (viewRef)?)
