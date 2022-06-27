@@ -92,7 +92,7 @@ namespace hwutils
                             default:
                                 break;
                         }
-                    if (seq == TK.STR) { s += '\n'; }
+                    //if (seq == TK.STR) { s += '\n'; }
                     if (seq == TK.EXP) { s = Parse(s); }
                 }
                 Parse(s);
