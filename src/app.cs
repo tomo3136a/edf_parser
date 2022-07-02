@@ -13,6 +13,9 @@ namespace hwutils
         string app_name;
         string[] app_args;
 
+        List<string> edf_lst = new List<string>() { ".edf", ".edif" };
+        List<string> csv_lst = new List<string>() { ".csv", ".bom" };
+
         Dictionary<string, string> opt = new Dictionary<string, string>() { };
         Dictionary<string, string> col = new Dictionary<string, string>() { };
         List<string> src_lst = new List<string>();
@@ -38,6 +41,29 @@ namespace hwutils
             }
             else if (arg.EndsWith(".xsl")) { xsl_lst.Add(arg); }
             else { src_lst.Add(arg); }
+        }
+
+        private string GetSource(string path)
+        {
+            string src = path;
+            string s = path.ToLower();
+            foreach (string ext in edf_lst) {
+                if (s.EndsWith(ext)) {
+                    src = Path.ChangeExtension(path, ".xedf");
+                    if (!Edif2Xml(path, src)) 
+                        MessageBox.Show("not find: " + path);
+                    return src;
+                }
+            }
+            foreach (string ext in csv_lst) {
+                if (s.EndsWith(ext)) {
+                    src = Path.ChangeExtension(path, ".xdata");
+                    if (!Csv2Xml(path, src)) 
+                        MessageBox.Show("not find: " + path);
+                    return src;
+                }
+            }
+            return src;
         }
 
         public override long Run()
@@ -71,15 +97,7 @@ namespace hwutils
             foreach (string arg in src_lst)
             {
                 Console.WriteLine("source: " + Path.GetFileName(arg));
-                string src = arg;
-                string s = arg.ToLower();
-                if (s.EndsWith(".edf") || s.EndsWith(".edif")) {
-                    src = Path.ChangeExtension(arg, ".xedf");
-                    if (!Edif2Xml(arg, src)) {
-                        MessageBox.Show("not find: " + arg);
-                        continue;
-                    }
-                }
+                string src = GetSource(arg);
                 foreach (string xsl in xsl_lst) {
                     Xslt(src, xsl, GetDestName(src, xsl), col);
                 }

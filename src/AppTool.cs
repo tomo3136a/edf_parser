@@ -27,7 +27,6 @@ namespace hwutils
                 res = edifxml.Execute(src, dst);
                 tm.Stop();
                 Console.WriteLine(" : "+tm.ElapsedMilliseconds+"ms");
-                //Console.WriteLine(":edif2xml: "+s+" : "+tm.ElapsedMilliseconds+"ms");
             }
             return res;
         }
@@ -45,6 +44,14 @@ namespace hwutils
                 root.AppendChild(dl);
             }
             doc.AppendChild(root);
+            return true;
+        }
+
+        public bool Csv2Xml(string src, string dst)
+        {
+            XmlDocument doc = new XmlDocument();
+            Csv2Xmldoc(doc, src);
+            doc.Save(dst);
             return true;
         }
 
