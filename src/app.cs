@@ -47,22 +47,12 @@ namespace hwutils
         {
             string src = path;
             string s = path.ToLower();
-            foreach (string ext in edf_lst) {
-                if (s.EndsWith(ext)) {
-                    src = Path.ChangeExtension(path, ".xedf");
-                    if (!Edif2Xml(path, src)) 
-                        MessageBox.Show("not find: " + path);
-                    return src;
-                }
-            }
-            foreach (string ext in csv_lst) {
-                if (s.EndsWith(ext)) {
-                    src = Path.ChangeExtension(path, ".xdata");
-                    if (!Csv2Xml(path, src)) 
-                        MessageBox.Show("not find: " + path);
-                    return src;
-                }
-            }
+            foreach (string ext in edf_lst) 
+                if (s.EndsWith(ext)) 
+                    return ConvertToXml(path, ".xedf", "edif2xml");
+            foreach (string ext in csv_lst) 
+                if (s.EndsWith(ext)) 
+                    return ConvertToXml(path, ".xdata", "csv2xml");
             return src;
         }
 

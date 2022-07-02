@@ -16,21 +16,6 @@ namespace hwutils
             return (Path.HasExtension(dst)) ? dst : (dst + ".txt");
         }
 
-        public bool Edif2Xml(string src, string dst)
-        {
-            bool res = true;
-            if(File.GetLastWriteTime(src) > File.GetLastWriteTime(dst)) {
-                string s = Path.GetFileNameWithoutExtension(src);
-                Console.Write(":edif2xml: "+s);
-                var tm = new System.Diagnostics.Stopwatch();
-                tm.Start();
-                res = edifxml.Execute(src, dst);
-                tm.Stop();
-                Console.WriteLine(" : "+tm.ElapsedMilliseconds+"ms");
-            }
-            return res;
-        }
-
         public bool Csv2Xmldoc(XmlDocument doc, string src)
         {
             XmlElement root = doc.CreateElement("data");
@@ -47,12 +32,32 @@ namespace hwutils
             return true;
         }
 
-        public bool Csv2Xml(string src, string dst)
+        private string ConvertToXml(string path, string ext, string name)
         {
-            XmlDocument doc = new XmlDocument();
-            Csv2Xmldoc(doc, src);
-            doc.Save(dst);
-            return true;
+            string dst = Path.ChangeExtension(path, ext);
+            if(File.GetLastWriteTime(path) > File.GetLastWriteTime(dst)) {
+                string s = Path.GetFileNameWithoutExtension(path);
+                Console.Write(":"+name+": "+s);
+                var tm = new System.Diagnostics.Stopwatch();
+                tm.Start();
+                if (ext == ".xedf") {
+                    if (!edifxml.Execute(path, dst)) {
+                       Console.WriteLine("\nnot find: " + path);
+                       return "";
+                    }
+                }
+                else if (ext == ".xdata") {
+                    XmlDocument doc = new XmlDocument();
+                    if (!Csv2Xmldoc(doc, path)) {
+                       Console.WriteLine("\nnot find: " + path);
+                       return "";
+                    }
+                    doc.Save(dst);
+                }
+                tm.Stop();
+                Console.WriteLine(" : "+tm.ElapsedMilliseconds+"ms");
+            }
+            return dst;
         }
 
         // xslt transformation
