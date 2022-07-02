@@ -14,7 +14,7 @@ namespace hwutils
         string[] app_args;
 
         List<string> edf_lst = new List<string>() { ".edf", ".edif" };
-        List<string> csv_lst = new List<string>() { ".csv", ".bom" };
+        List<string> csv_lst = new List<string>() { ".csv", ".bom", ".txt" };
 
         Dictionary<string, string> opt = new Dictionary<string, string>() { };
         Dictionary<string, string> col = new Dictionary<string, string>() { };

@@ -25,11 +25,12 @@ namespace hwutils
         XmlDocument doc;
         XmlNode node;
         PS seq;
-        void InitParse()
+        void InitParse(XmlDocument doc = null)
         {
             foreach (string s in nms) { this.nm.Add(s.ToLower(), s); }
             foreach (string s in sns) { this.sn.Add(s.ToLower(), s); }
-            doc = new XmlDocument();
+            //doc = new XmlDocument();
+            this.doc = doc ?? new XmlDocument();
             doc.AppendChild(doc.CreateXmlDeclaration("1.0", null, null));
             node = doc;
             seq = PS.S0;
@@ -58,9 +59,9 @@ namespace hwutils
             }
             return "";
         }
-        void LoadEdif(string src, string enc)
+        void LoadEdif(XmlDocument doc, string src, string enc)
         {
-            InitParse();
+            InitParse(doc);
             using (StreamReader sr = new StreamReader(src, Encoding.GetEncoding(enc)))
             {
                 TK seq = TK.EXP;
@@ -98,6 +99,13 @@ namespace hwutils
                 Parse(s);
             }
         }
+        public bool ConvertToXmldoc(XmlDocument doc, string src)
+        {
+            string encoding = ConfigurationManager.AppSettings["encoding"];
+            // encoding: utf-8, shift_jis, euc-jp
+            LoadEdif(doc, src, encoding ?? "shift_jis");
+            return true;
+        }
         public bool Execute(string src, string dst)
         {
             if (!File.Exists(src)) { return false; }
@@ -109,7 +117,7 @@ namespace hwutils
             }
             string encoding = ConfigurationManager.AppSettings["encoding"];
             // encoding: utf-8, shift_jis, euc-jp
-            LoadEdif(src, encoding ?? "shift_jis");
+            LoadEdif(null, src, encoding ?? "shift_jis");
             doc.Save(dst);
             return true;
         }

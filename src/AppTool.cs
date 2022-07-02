@@ -16,6 +16,11 @@ namespace hwutils
             return (Path.HasExtension(dst)) ? dst : (dst + ".txt");
         }
 
+        public bool Edif2Xmldoc(XmlDocument doc, string src)
+        {
+            return edifxml.ConvertToXmldoc(doc, src);
+        }
+
         public bool Csv2Xmldoc(XmlDocument doc, string src)
         {
             XmlElement root = doc.CreateElement("data");
@@ -32,32 +37,31 @@ namespace hwutils
             return true;
         }
 
-        private string ConvertToXml(string path, string ext, string name)
+        private string ConvertToXml(string src, string ext, string name)
         {
-            string dst = Path.ChangeExtension(path, ext);
-            if(File.GetLastWriteTime(path) > File.GetLastWriteTime(dst)) {
-                string s = Path.GetFileNameWithoutExtension(path);
-                Console.Write(":"+name+": "+s);
-                var tm = new System.Diagnostics.Stopwatch();
-                tm.Start();
-                if (ext == ".xedf") {
-                    if (!edifxml.Execute(path, dst)) {
-                       Console.WriteLine("\nnot find: " + path);
-                       return "";
-                    }
-                }
-                else if (ext == ".xdata") {
-                    XmlDocument doc = new XmlDocument();
-                    if (!Csv2Xmldoc(doc, path)) {
-                       Console.WriteLine("\nnot find: " + path);
-                       return "";
-                    }
-                    doc.Save(dst);
-                }
+            string dst = Path.ChangeExtension(src, ext);
+            if (!File.Exists(src)) { return ""; }
+            if (File.Exists(dst))
+            {
+                DateTime src_dt = File.GetLastWriteTime(src);
+                DateTime dst_dt = File.GetLastWriteTime(dst);
+                if (dst_dt > src_dt) { return dst; }
+            }
+            string s = Path.GetFileNameWithoutExtension(src);
+            Console.Write(":"+name+": "+s);
+            var tm = new System.Diagnostics.Stopwatch();
+            tm.Start();
+            XmlDocument doc = new XmlDocument();
+            if (((ext == ".xedf") ? Edif2Xmldoc(doc, src) :
+                 (ext == ".xdata") ? Csv2Xmldoc(doc, src) : 
+                 false)) {
+                doc.Save(dst);
                 tm.Stop();
                 Console.WriteLine(" : "+tm.ElapsedMilliseconds+"ms");
+                return dst;
             }
-            return dst;
+            Console.WriteLine("\nnot find: " + src);
+            return "";
         }
 
         // xslt transformation
