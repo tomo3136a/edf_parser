@@ -136,6 +136,7 @@ namespace hwutils
                 Xslt(src, xsl, Path.Combine(out_dir, dst), col);
                 string k1 = "@"+Path.GetFileNameWithoutExtension(dst);
                 string v1 = Path.Combine(out_dir, dst);
+                if (col.ContainsKey(k1)) col.Remove(k1);
                 col.Add(k1, v1);
             }
 
