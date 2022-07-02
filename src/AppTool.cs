@@ -30,8 +30,27 @@ namespace hwutils
             return true;
         }
 
-        private string ConvertToXml(string src, string ext, string name)
+        private string GetConvertType(string path)
         {
+            string s = path.ToLower();
+            foreach (string ext in edf_lst) 
+                if (s.EndsWith(ext)) return ".xedf";
+            foreach (string ext in csv_lst) 
+                if (s.EndsWith(ext)) return ".xdata";
+            return null;
+        }
+
+        private bool ConvertToXmldoc(XmlDocument doc, string src, string ext)
+        {
+            return (ext == ".xedf") ? EdifXmlDocument.ToXmldoc(doc, src) : 
+                   (ext == ".xdata") ? Csv2Xmldoc(doc, src) : false;
+        }
+
+        private string GetSource(string path)
+        {
+            string ext = GetConvertType(path);
+            if (ext == null) return path;
+            string src = path;
             string dst = Path.ChangeExtension(src, ext);
             if (!File.Exists(src)) { return ""; }
             if (File.Exists(dst))
@@ -40,21 +59,20 @@ namespace hwutils
                 DateTime dst_dt = File.GetLastWriteTime(dst);
                 if (dst_dt > src_dt) { return dst; }
             }
+            string name = (ext == ".xedf") ? "edif2xml" :
+                          (ext == ".xdata") ? "csv2xml" : null;
             string s = Path.GetFileNameWithoutExtension(src);
             Console.Write(":"+name+": "+s);
+            XmlDocument doc = new XmlDocument();
             var tm = new System.Diagnostics.Stopwatch();
             tm.Start();
-            XmlDocument doc = new XmlDocument();
-            if (((ext == ".xedf") ? EdifXmlDocument.ToXmldoc(doc, src) :
-                 (ext == ".xdata") ? Csv2Xmldoc(doc, src) : 
-                 false)) {
+            if (ConvertToXmldoc(doc, src, ext)) {
                 doc.Save(dst);
-                tm.Stop();
-                Console.WriteLine(" : "+tm.ElapsedMilliseconds+"ms");
-                return dst;
+                src = dst;
             }
-            Console.WriteLine("\nnot find: " + src);
-            return "";
+            tm.Stop();
+            Console.WriteLine(" : "+tm.ElapsedMilliseconds+"ms");
+            return src;
         }
 
         // xslt transformation
@@ -75,8 +93,8 @@ namespace hwutils
                         continue;
                     }
                     XmlDocument doc = new XmlDocument();
-                    if (v.EndsWith(".txt") || v.EndsWith(".csv")) Csv2Xmldoc(doc, v);
-                    else doc.Load(v);
+                    string ext = GetConvertType(v);
+                    if (! ConvertToXmldoc(doc, v, ext)) doc.Load(v);
                     al.AddParam(k.Substring(1), "", doc);
                     continue;
                 }
@@ -110,6 +128,16 @@ namespace hwutils
             string out_dir = Path.Combine(src_dir, name);
             if (!Directory.Exists(out_dir))
                 Directory.CreateDirectory(out_dir);
+
+            foreach (string k in Directory.EnumerateFiles(xsl_dir, "data_*.xsl"))
+            {
+                string xsl = Path.Combine(xsl_dir, k);
+                string dst = GetDestName(src, xsl);
+                Xslt(src, xsl, Path.Combine(out_dir, dst), col);
+                string k1 = "@"+Path.GetFileNameWithoutExtension(dst);
+                string v1 = Path.Combine(out_dir, dst);
+                col.Add(k1, v1);
+            }
 
             foreach (string k in Directory.EnumerateFiles(xsl_dir, "edif_*.xsl"))
             {

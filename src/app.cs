@@ -48,19 +48,6 @@ namespace hwutils
             else { src_lst.Add(arg); }
         }
 
-        private string GetSource(string path)
-        {
-            string src = path;
-            string s = path.ToLower();
-            foreach (string ext in edf_lst) 
-                if (s.EndsWith(ext)) 
-                    return ConvertToXml(path, ".xedf", "edif2xml");
-            foreach (string ext in csv_lst) 
-                if (s.EndsWith(ext)) 
-                    return ConvertToXml(path, ".xdata", "csv2xml");
-            return src;
-        }
-
         public override long Run()
         {
             string ini = app_name + ".ini";

@@ -57,7 +57,7 @@ namespace hwutils
             accept.Click += new EventHandler(on_close);
             worker.WorkerSupportsCancellation = true;
             this.Text = "Console";
-            this.ClientSize = new System.Drawing.Size(284, 204);
+            this.ClientSize = new System.Drawing.Size(640, 480);
             this.AcceptButton = accept;
             this.Shown += on_shown;
             this.Controls.Add(textbox);
