@@ -29,7 +29,6 @@ namespace hwutils
         {
             foreach (string s in nms) { this.nm.Add(s.ToLower(), s); }
             foreach (string s in sns) { this.sn.Add(s.ToLower(), s); }
-            //doc = new XmlDocument();
             this.doc = doc ?? new XmlDocument();
             doc.AppendChild(doc.CreateXmlDeclaration("1.0", null, null));
             node = doc;
@@ -99,26 +98,12 @@ namespace hwutils
                 Parse(s);
             }
         }
-        public bool ConvertToXmldoc(XmlDocument doc, string src)
+        public static bool ToXmldoc(XmlDocument doc, string src)
         {
-            string encoding = ConfigurationManager.AppSettings["encoding"];
             // encoding: utf-8, shift_jis, euc-jp
-            LoadEdif(doc, src, encoding ?? "shift_jis");
-            return true;
-        }
-        public bool Execute(string src, string dst)
-        {
-            if (!File.Exists(src)) { return false; }
-            if (File.Exists(dst))
-            {
-                DateTime src_dt = File.GetLastWriteTime(src);
-                DateTime dst_dt = File.GetLastWriteTime(dst);
-                if (dst_dt > src_dt) { return true; }
-            }
             string encoding = ConfigurationManager.AppSettings["encoding"];
-            // encoding: utf-8, shift_jis, euc-jp
-            LoadEdif(null, src, encoding ?? "shift_jis");
-            doc.Save(dst);
+            EdifXmlDocument edifxml = new EdifXmlDocument();
+            edifxml.LoadEdif(doc, src, encoding ?? "shift_jis");
             return true;
         }
     }

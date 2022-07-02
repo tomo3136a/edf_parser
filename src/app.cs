@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Diagnostics;
 using System.Windows.Forms;
@@ -13,8 +14,10 @@ namespace hwutils
         string app_name;
         string[] app_args;
 
-        List<string> edf_lst = new List<string>() { ".edf", ".edif" };
-        List<string> csv_lst = new List<string>() { ".csv", ".bom", ".txt" };
+        readonly string edf_exts = ".edf,.edif";
+        readonly string csv_exts = ".csv,.txt";
+        string[] edf_lst;
+        string[] csv_lst;
 
         Dictionary<string, string> opt = new Dictionary<string, string>() { };
         Dictionary<string, string> col = new Dictionary<string, string>() { };
@@ -25,6 +28,8 @@ namespace hwutils
         {
             app_name = name;
             app_args = args;
+            edf_lst = (ConfigurationManager.AppSettings["edf-exts"] ?? edf_exts).Split(',');
+            csv_lst = (ConfigurationManager.AppSettings["csv-exts"] ?? csv_exts).Split(',');
         }
 
         private void SetParam(string arg)

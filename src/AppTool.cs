@@ -8,17 +8,10 @@ namespace hwutils
 {
     public partial class App
     {
-        readonly EdifXmlDocument edifxml = new EdifXmlDocument();
-
         public string GetDestName(string src, string s)
         {
             string dst = Path.GetFileNameWithoutExtension(s);
             return (Path.HasExtension(dst)) ? dst : (dst + ".txt");
-        }
-
-        public bool Edif2Xmldoc(XmlDocument doc, string src)
-        {
-            return edifxml.ConvertToXmldoc(doc, src);
         }
 
         public bool Csv2Xmldoc(XmlDocument doc, string src)
@@ -52,7 +45,7 @@ namespace hwutils
             var tm = new System.Diagnostics.Stopwatch();
             tm.Start();
             XmlDocument doc = new XmlDocument();
-            if (((ext == ".xedf") ? Edif2Xmldoc(doc, src) :
+            if (((ext == ".xedf") ? EdifXmlDocument.ToXmldoc(doc, src) :
                  (ext == ".xdata") ? Csv2Xmldoc(doc, src) : 
                  false)) {
                 doc.Save(dst);
