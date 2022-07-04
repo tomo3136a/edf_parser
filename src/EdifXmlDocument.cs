@@ -17,7 +17,7 @@ namespace hwutils
             "figuregroup", "figuregroupOverride", "figure", "offpageconnector",
             "net", "netbundle", "property", "parameter", "display", "keyworddisplay"
         };
-        readonly string[] sns = { "name", "rename" };
+        readonly string[] sns = { "name", "rename", "array" };
         readonly Dictionary<string, string> nm = new Dictionary<string, string>();
         readonly Dictionary<string, string> sn = new Dictionary<string, string>();
         enum PS { S0, S1, S2, S3, S4 };
@@ -48,7 +48,9 @@ namespace hwutils
                     if (sn.ContainsKey(sl)) { seq = PS.S2; break; }
                     seq = PS.S3; break;
                 case PS.S1: ((XmlElement)node).SetAttribute("name", s); seq = PS.S4; break;
-                case PS.S2: ((XmlElement)node.ParentNode).SetAttribute("name", s); seq = PS.S3; break;
+                case PS.S2: { XmlElement ele = (XmlElement)node.ParentNode;
+                    while (sn.ContainsKey(ele.Name)) {ele = (XmlElement)ele.ParentNode; }
+                    ele.SetAttribute("name", s); seq = PS.S3; } break;
                 case PS.S3: node.AppendChild(doc.CreateTextNode(s)); seq = PS.S4; break;
                 case PS.S4:
                     node.AppendChild(doc.CreateWhitespace(" "));

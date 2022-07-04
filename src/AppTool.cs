@@ -78,7 +78,6 @@ namespace hwutils
         // xslt transformation
         public void Xslt(string src, string xsl, string dst, Dictionary<string, string> col)
         {
-            Console.Write(":xsl: "+Path.GetFileNameWithoutExtension(dst));
             var tm = new System.Diagnostics.Stopwatch();
             tm.Start();
             XslCompiledTransform trans = new XslCompiledTransform();
@@ -107,6 +106,7 @@ namespace hwutils
             trans.Transform(src, al, wrt);
             wrt.Close();
             tm.Stop();
+            Console.Write(":xsl: "+Path.GetFileNameWithoutExtension(dst));
             Console.WriteLine(" : "+tm.ElapsedMilliseconds+"ms");
         }
 
