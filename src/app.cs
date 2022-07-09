@@ -13,9 +13,11 @@ namespace hwutils
     {
         string app_name;
         string[] app_args;
+        string ini;
+        string xsl_dir;
 
         readonly string edf_exts = ".edf,.edif";
-        readonly string csv_exts = ".csv,.txt";
+        readonly string csv_exts = ".csv,.lst,.txt";
         string[] edf_lst;
         string[] csv_lst;
 
@@ -48,9 +50,9 @@ namespace hwutils
             else { src_lst.Add(arg); }
         }
 
-        public override long Run()
+        public bool Init()
         {
-            string ini = app_name + ".ini";
+            ini = app_name + ".ini";
             foreach (string arg in app_args) SetParam(arg);
 
             // input setting file
@@ -72,10 +74,18 @@ namespace hwutils
                 SettingDialog dlg = new SettingDialog(app_name);
                 dlg.SetData(src_lst, xsl_lst, col);
                 if (dlg.ShowDialog() != DialogResult.OK)
-                     return -1;
+                     return false;
                 dlg.Restore();
             }
 
+            // rename xsl folder
+            string cur_dir = Directory.GetCurrentDirectory();
+            xsl_dir = Path.Combine(cur_dir, (opt.ContainsKey("-x")) ? opt["-x"] : "xsl");
+            return true;
+        }
+
+        public override long Run()
+        {
             foreach (string arg in src_lst)
             {
                 Console.WriteLine("source: " + Path.GetFileName(arg));
@@ -117,7 +127,8 @@ namespace hwutils
                 AppDomain.CurrentDomain.SetData("APP_CONFIG_FILE", p + ".config");
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
-                Application.Run(new App(p, args));
+                App app = new App(p, args);
+                if(app.Init()) Application.Run(app);
             }
             catch (Exception e) { MessageBox.Show(e.ToString()); }
             Debug.Flush();

@@ -36,14 +36,14 @@ namespace hwutils
             foreach (string ext in edf_lst) 
                 if (s.EndsWith(ext)) return ".xedf";
             foreach (string ext in csv_lst) 
-                if (s.EndsWith(ext)) return ".xdata";
+                if (s.EndsWith(ext)) return ".data";
             return null;
         }
 
         private bool ConvertToXmldoc(XmlDocument doc, string src, string ext)
         {
             return (ext == ".xedf") ? EdifXmlDocument.ToXmldoc(doc, src) : 
-                   (ext == ".xdata") ? Csv2Xmldoc(doc, src) : false;
+                   (ext == ".data") ? Csv2Xmldoc(doc, src) : false;
         }
 
         private string GetSource(string path)
@@ -60,7 +60,7 @@ namespace hwutils
                 if (dst_dt > src_dt) { return dst; }
             }
             string name = (ext == ".xedf") ? "edif2xml" :
-                          (ext == ".xdata") ? "csv2xml" : null;
+                          (ext == ".data") ? "csv2xml" : null;
             string s = Path.GetFileNameWithoutExtension(src);
             Console.Write(":"+name+": "+s);
             XmlDocument doc = new XmlDocument();
@@ -78,6 +78,9 @@ namespace hwutils
         // xslt transformation
         public void Xslt(string src, string xsl, string dst, Dictionary<string, string> col)
         {
+            Console.WriteLine("src: "+src);
+            Console.WriteLine("dst: "+dst);
+            Console.WriteLine("xsl: "+xsl);
             var tm = new System.Diagnostics.Stopwatch();
             tm.Start();
             XslCompiledTransform trans = new XslCompiledTransform();
@@ -119,9 +122,6 @@ namespace hwutils
 
         public void Execute(string src, Dictionary<string, string> col)
         {
-            string cur_dir = Directory.GetCurrentDirectory();
-            string xsl_dir = Path.Combine(cur_dir, "xsl");
-
             src = Path.GetFullPath(src);
             string src_dir = Path.GetDirectoryName(src);
             string name = Path.GetFileNameWithoutExtension(src);
