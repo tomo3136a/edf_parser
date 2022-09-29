@@ -30,8 +30,8 @@ namespace hwutils
         {
             app_name = name;
             app_args = args;
-            edf_lst = (ConfigurationManager.AppSettings["edf-exts"] ?? edf_exts).Split(',');
-            csv_lst = (ConfigurationManager.AppSettings["csv-exts"] ?? csv_exts).Split(',');
+            edf_lst = ((ConfigurationManager.AppSettings["edf-exts"] == null) ? edf_exts : ConfigurationManager.AppSettings["edf-exts"]).Split(',');
+            csv_lst = ((ConfigurationManager.AppSettings["csv-exts"] == null) ? csv_exts : ConfigurationManager.AppSettings["csv-exts"]).Split(',');
         }
 
         private void SetParam(string arg)

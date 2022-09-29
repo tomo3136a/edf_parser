@@ -222,14 +222,14 @@ namespace hwutils
         {
             src_lst.Clear();
             xsl_lst.Clear();
-            string f = src1Box.Text ?? "";
+            string f = (src1Box.Text == null) ? "" : src1Box.Text;
             if (f.Length > 0) src_lst.Add(f);
-            f = src2Box.Text ?? "";
+            f = (src2Box.Text == null) ? "" : src2Box.Text;
             if (f.Length > 0) src_lst.Add(f);
-            f = xslBox.Text ?? "";
+            f = (xslBox.Text == null) ? "" : xslBox.Text;
             if (f.Length > 0) xsl_lst.Add(f);
-            string k = kyBox[0].Text ?? "";
-            string d = dtBox[0].Text ?? "";
+            string k = (kyBox[0].Text == null) ? "" : kyBox[0].Text;
+            string d = (kyBox[0].Text == null) ? "" : kyBox[0].Text;
             if (k.Length > 0) {
                 if (col.ContainsKey(k)){
                     col.Remove(k);

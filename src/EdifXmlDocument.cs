@@ -29,7 +29,7 @@ namespace hwutils
         {
             foreach (string s in nms) { this.nm.Add(s.ToLower(), s); }
             foreach (string s in sns) { this.sn.Add(s.ToLower(), s); }
-            this.doc = doc ?? new XmlDocument();
+            this.doc = (doc == null) ? new XmlDocument() : doc;
             doc.AppendChild(doc.CreateXmlDeclaration("1.0", null, null));
             node = doc;
             seq = PS.S0;
@@ -105,7 +105,7 @@ namespace hwutils
             // encoding: utf-8, shift_jis, euc-jp
             string encoding = ConfigurationManager.AppSettings["encoding"];
             EdifXmlDocument edifxml = new EdifXmlDocument();
-            edifxml.LoadEdif(doc, src, encoding ?? "shift_jis");
+            edifxml.LoadEdif(doc, src, (encoding == null) ? "shift_jis" : encoding);
             return true;
         }
     }
