@@ -1,0 +1,579 @@
+// #define DEBUG
+
+using System;
+using System.Collections.Generic;
+using System.Configuration;
+using System.IO;
+using System.Diagnostics;
+using System.Windows.Forms;
+using System.Linq;
+using System.Text;
+using System.IO.Compression;
+
+namespace Document.Pdf
+{
+    public class PdfNode
+    {
+        PdfDoc doc;
+        long offset;
+        byte[] data;
+
+        public enum ObjType{
+            UNKNOWN,
+            INTEGER,
+            FLOAT,
+            NANE,
+            STRING,
+            DICT,
+            LIST,
+            NULL,
+            ERROR
+        };
+
+        //obj
+        int obj_id;
+        int obj_rev;
+        ObjType obj_type;
+        // long val_i;
+        // double val_f;
+        // string val_n;
+        // string val_s;
+        // string val_d;
+        // string val_l;
+
+        public PdfNode(PdfDoc doc, int offset)
+        {
+            this.doc = doc;
+            this.offset = offset;
+            this.data = null;
+
+            string s = doc.GetString(offset);
+            string[] ss = s.Split(' ');
+            obj_type = ObjType.ERROR;
+            if (ss[2] == "obj"){
+                obj_type = ObjType.UNKNOWN;
+                obj_id = Int32.Parse(ss[0]);
+                obj_rev = Int32.Parse(ss[1]);
+                s = doc.GetString(offset, 1);
+                ss = s.Split(' ');
+                foreach (string a in ss){
+                    Console.WriteLine(">"+a);
+                }
+            }
+        }
+        public byte[] GetBytes()
+        {
+            return data;
+        }
+        public ObjType GetObjType()
+        {
+            return obj_type;
+        }
+        public void debug_print()
+        {
+            Console.WriteLine("Obj>"+obj_id+" "+obj_rev+" "+obj_type);
+        }
+    }
+
+    public class PdfParser
+    {
+        const int BUFSIZE = 4096;
+        byte[] buf = new byte[BUFSIZE*2];
+        long buf_offset;
+        int buf_index;
+        int buf_size;
+
+        public PdfParser()
+        {
+            reset();
+        }
+
+        public static void debug_print(byte[] data, int size = 0, int offset = 0, string pre = null)
+        {
+            size = (size>0) ? size : data.Length;
+            Console.Write((pre == null) ? "data: " : pre);
+            for (int i = offset; i < offset+size; i ++)
+            {
+                Console.Write(string.Format("{0:X2} ", data[i]));
+            }
+            Console.WriteLine();
+        }
+
+        public int ReadToBuffer(FileStream fs, long offset)
+        {
+            long pos = (offset < 0) ? (fs.Length + offset) : offset;
+            long index = pos / BUFSIZE;
+            if (index != buf_index) {
+                buf_offset = index * BUFSIZE;
+                buf_index = (int)index;
+                long size = fs.Length - buf_offset;
+                buf_size = (size > BUFSIZE) ? BUFSIZE : (int)size;
+                fs.Seek(buf_offset, SeekOrigin.Begin);
+                Array.Copy(buf, BUFSIZE, buf, 0, BUFSIZE);
+                buf_size += BUFSIZE;
+                for (int i = BUFSIZE; i < buf_size; i += fs.Read(buf, i, buf_size - i));
+            }
+            return (int)(offset - buf_offset + BUFSIZE);
+        }
+
+        public static byte[] GetStreamData(byte[] src, int idx, int size, int filter, int predictor, int columns)
+        {
+            switch (filter) {
+                case 0: {
+                    byte[] dst = new byte[size];
+                    Array.Copy(src, idx, dst, 0, size);
+                    return dst;
+                }
+                case 4: {
+                    using (var ss = new MemoryStream(src, idx+2, size-2))
+                    using (var ds = new DeflateStream(ss, CompressionMode.Decompress))
+                    using (var ts = new MemoryStream())
+                    {
+                        ds.CopyTo(ts);
+                        if (columns == 0) return ts.GetBuffer();
+                        long cnt = ts.Length / columns;
+                        byte[] ba1 = new byte[columns];
+                        byte[] ba2 = new byte[columns];
+                        ts.Position = 0;
+                        using (var dst = new MemoryStream())
+                        {
+                            if (predictor == 12) {
+                                for (int i = 0; i < cnt; i ++) {
+                                    if (ts.ReadByte() != 2) break;
+                                    ts.Read(ba1, 0, ba1.Length);
+                                    for (int j = 0; j < columns; j ++) {
+                                        ba2[j] += ba1[j];
+                                    }
+                                    dst.Write(ba2, 0, ba2.Length);
+                                }
+                            }
+                            return dst.GetBuffer();
+                        }
+                    }
+                }
+                default: {
+                    byte[] dst = new byte[0];
+                    return dst;
+                }
+            }
+        }
+
+        int p_seq = 0;
+        long p_pos = 0;
+        string p_key = "";
+        Stack<string> p_stk = new Stack<string>();
+        Stack<string> p_map = new Stack<string>();
+
+        //object
+        long o_pos;
+        int o_no;
+        int o_rev;
+
+        //stream
+        int s_pos;
+        int s_length;
+        int s_filter;
+        int s_columns;
+        int s_predictor;
+
+        public void reset()
+        {
+            buf_index = -1;
+            o_pos = 0;
+            o_no = 0;
+            o_rev = 0;
+            s_length = 0;
+            s_pos = 0;
+            s_filter = 0;
+            s_columns = 0;
+            s_predictor = 0;
+        }
+
+        readonly string K_TRUE = "true";
+        readonly string K_FALSE = "false";
+        readonly string K_NULL = "null";
+        readonly string K_R = "R";
+        readonly string K_OBJ = "obj";
+        readonly string K_ENDOBJ = "endobj";
+        readonly string K_STREAM = "stream";
+        readonly string K_ENDSTREAM = "endstream";
+        readonly string K_STARTXREF = "startxref";
+        readonly string K_XREF = "xref";
+        readonly string K_TRAILER = "trailer";
+
+        public string parse(string type, int ps, int pe)
+        {
+            string s = (ps < pe) ? Encoding.ASCII.GetString(buf, ps, pe - ps) : "";
+            Console.Write(s + " ");
+
+            p_stk.Push(s);
+
+            if (type == "o") {
+                if (s == K_TRUE || s == K_FALSE || s == K_NULL) { }
+                if (s == K_OBJ) {
+                    p_stk.Pop();
+                    o_rev = Int32.Parse(p_stk.Pop());
+                    o_no = Int32.Parse(p_stk.Pop());
+                    o_pos = p_pos;
+                }
+                if (s == K_ENDOBJ) { p_seq = -1; }
+                if (s == K_STREAM) { }
+                if (s == K_ENDSTREAM) {
+                    byte[] ba = GetStreamData(buf, 2+s_pos, s_length, s_filter, s_predictor, s_columns);
+                    debug_print(ba);
+                }
+                Console.WriteLine("");
+                return s;
+            }
+
+            switch (p_seq) {
+                case 0:
+                if (type == "n") { p_seq = 1; break; }
+                break;
+                case 1:
+                if (p_key == "/Length") {
+                    s_length = Int32.Parse(s);
+                    p_key = "";
+                    p_seq = 0;
+                    break;
+                }
+                if (p_key == "/Filter") {
+                    if (s == "/FlateDecode") { s_filter = 4; }
+                    p_key = "";
+                    p_seq = 0;
+                    break;
+                }
+                if (p_key == "/Columns") {
+                    s_columns = Int32.Parse(s);
+                    p_key = "";
+                    p_seq = 0;
+                    break;
+                }
+                if (p_key == "/Predictor") {
+                    s_predictor = Int32.Parse(s);
+                    p_key = "";
+                    p_seq = 0;
+                    break;
+                }
+                
+                break;
+                default:
+                p_key = "";
+                p_seq = 0;
+                break;
+            }
+            if (s == "<<" || s== ">>"){ Console.WriteLine(""); }
+
+            if (type == "n") { p_key = s; }
+            return s;
+        }
+
+        int t_seq = 0;
+        int t_pos = 0;
+        //string t_s;
+
+        public void token(FileStream fs, long offset)
+        {
+            p_seq = 0;
+            p_pos = offset;
+            t_pos = ReadToBuffer(fs, offset);
+            int pos = t_pos;
+            string s;
+            while (p_seq >= 0) {
+                if (t_pos >= buf_size) {
+                    t_pos = ReadToBuffer(fs, buf_offset + t_pos - BUFSIZE);
+                    if (t_pos >= buf_size) break;
+                    pos -= BUFSIZE;
+                }
+                byte b = buf[t_pos++];
+                switch (t_seq) {
+                    case 0: //space
+                    if (b <= 0x20) { pos = t_pos; break; }
+                    if (b >= 0x30 && b <= 0x39) { t_seq = 1; break; } // 0-9
+                    if (b == 0x2b || b == 0x2d) { t_seq = 1; break; } // +-
+                    if (b == 0x2e) { t_seq = 2; break; } // .
+                    if (b == 0x2f) { t_seq = 3; break; } // /
+                    if (b == 0x3c) { t_seq = 4; break; } // <
+                    if (b == 0x3e) { t_seq = 5; break; } // >
+                    if (b == 0x5b) { parse("[", pos, t_pos); pos = t_pos; break; }
+                    if (b == 0x5d) { parse("]", pos, t_pos); pos = t_pos; break; }
+                    if (b <= 0x25) { t_seq = 7; break; } // %
+                    if (b <= 0x25) { t_seq = 8; break; } // (
+                    if (b >= 0x41 && b <= 0x5a) { t_seq = 10; break; } // A-Z
+                    if (b >= 0x61 && b <= 0x7a) { t_seq = 10; break; } // a-z
+                    parse("error:0", pos, t_pos);
+                    break;
+
+                    case 1: //number
+                    if (b >= 0x30 && b <= 0x39) break; // 0-9
+                    if (b == 0x2e) { t_seq = 2; break; } // .
+                    parse("i", pos, --t_pos);
+                    pos = t_pos;
+                    t_seq = 0;
+                    break;
+
+                    case 2: // number(float)
+                    if (b >= 0x30 && b <= 0x39) break; // 0-9
+                    parse("f", pos, --t_pos);
+                    pos = t_pos;
+                    t_seq = 0;
+                    break;
+
+                    case 3: // name
+                    if (b >= 0x41 && b <= 0x5a) break; // A-Z
+                    if (b >= 0x61 && b <= 0x7a) break; // a-z
+                    parse("n", pos, --t_pos);
+                    pos = t_pos;
+                    t_seq = 0;
+                    break;
+
+                    case 4: // string+map
+                    if (b == 0x3c) { // <
+                        parse("<", pos, t_pos);
+                        pos = t_pos;
+                        t_seq = 0;
+                        break;
+                    }
+                    t_pos --;
+                    t_seq = 6;
+                    break;
+
+                    case 5: // map-end
+                    if (b == 0x3e) parse(">", pos, t_pos);
+                    else parse("error:6", pos, t_pos);
+                    pos = t_pos;
+                    t_seq = 0;
+                    break;
+
+                    case 6: // hex-string
+                    if (b >= 0x30 && b <= 0x39) break; // 0-9
+                    if (b >= 0x41 && b <= 0x5a) break; // A-Z
+                    if (b >= 0x61 && b <= 0x7a) break; // a-z
+                    if (b == 0x3e) parse("h", pos+1, t_pos-1);
+                    else parse("error:6", pos+1, t_pos-1);
+                    pos = t_pos;
+                    t_seq = 0;
+                    break;
+
+                    case 7: // comment
+                    if (b == 10 || b == 13) { pos = t_pos; t_seq = 0; break; }
+                    break;
+
+                    case 8: // string
+                    if (b == 0x29) { parse("s", pos+1, t_pos); pos = t_pos; t_seq = 0; break; }
+                    if (b == 0x5c) { t_seq ++; break; }
+                    break;
+
+                    case 9: // string-escape
+                    t_seq --;
+                    break;
+
+                    case 10: // ope
+                    if (b >= 0x41 && b <= 0x5a) break; // A-Z
+                    if (b >= 0x61 && b <= 0x7a) break; // a-z
+                    s = parse("o", pos, --t_pos);
+                    if (s == "stream") { t_seq = 11; break; }
+                    pos = t_pos;
+                    t_seq = 0;
+                    break;
+
+                    case 11: // skip
+                    while (b == 10 || b == 13) break;
+                    s_pos = t_pos-1;
+                    t_pos = ReadToBuffer(fs, buf_offset + t_pos - BUFSIZE + s_length);
+                    if (t_pos >= buf_size) break;
+                    pos -= buf_size;
+                    t_seq = 12;
+                    break;
+
+                    case 12: // skip
+                    while (b == 10 || b == 13) break;
+                    pos = t_pos;
+                    t_seq = 0;
+                    break;
+
+                    default:
+                    pos = t_pos;
+                    t_seq = 0;
+                    break;
+                }
+            }
+        }
+    }
+
+    public class PdfDoc
+    {
+        string filePath = @".\\out.pdf";
+
+        public PdfDoc(string path)
+        {
+            filePath = path;
+        }
+
+        public void debug_print(byte[] data, int size = 0, int offset = 0, string pre = null)
+        {
+            size = (size>0) ? size : data.Length;
+            Console.Write((pre == null) ? "data: " : pre);
+            for (int i = offset; i < offset+size; i ++)
+            {
+                Console.Write(string.Format("{0:X2} ", data[i]));
+            }
+            Console.WriteLine();
+        }
+
+        // byte[] header;
+        // byte[] trailer;
+
+        string[] kw = {
+            "%PDF-",
+            "%%EOF",
+            "startxref",
+            "xref",
+            "trailer"
+        };
+
+        const int BUFSIZE = 4096;
+        // byte[] zero = new byte[BUFSIZE*2];
+        byte[] buf = new byte[BUFSIZE];
+
+        //byte[] m = Encoding.ASCII.GetBytes(k);
+        public int FindLast(int pos, string k)
+        {
+            for (int i = pos-k.Length; i >= 0; i --) {
+                if (buf[i] != 10 && buf[i] != 13) continue;
+                if (Encoding.ASCII.GetString(buf, i + 1, k.Length) == k) 
+                    return i + 1;
+                i -= k.Length;
+            }
+            return -1;
+        }
+
+        public int GetLine(int pos, int n = 0)
+        {
+            for (int i = pos, j = 0; i < buf.Length; i ++) {
+                if (buf[i] != 10 && buf[i] != 13) {
+                    if (j == n) return i;
+                    continue;
+                }
+                if (i > pos && (buf[i-1] == 10 || buf[i-1] == 13))
+                    continue;
+                j ++;
+            }
+            return buf.Length;
+        }
+
+        public string GetString(int pos, int n = 0)
+        {
+            pos = GetLine(pos, n);
+            int size = buf.Length - pos;
+            for (int i = pos; i < buf.Length; i ++) {
+                if (buf[i] == 10 || buf[i] == 13) {
+                    size = i - pos;
+                    break;
+                }
+            }
+            return Encoding.ASCII.GetString(buf, pos, size);
+        }
+
+        // long body_pos;
+        long xref_pos;
+        // long eof_pos;
+
+        // public static long XrefPos(FileStream fs)
+        // {
+        //     int buf_size = (fs.Length < BUFSIZE) ? (int)fs.Length : BUFSIZE;
+        //     byte[] buf = new byte[buf_size];
+        //     fs.Seek(0, SeekOrigin.Begin);
+        //     for (int i = 0; i < buf_size; i += fs.Read(buf, i, buf_size - i));
+        //     for (int sp = 0, i = 0; i < buf_size; i ++) {
+        //         if (buf[i] == 10 || buf[i] == 13) {
+        //             int sz = i - sp;
+        //             byte[] ba = new byte[sz];
+        //             Array.Copy(buf, sp, ba, 0, sz);
+        //             sp = i + 1;
+        //         }
+        //     }
+        //     int buf_size = (fs.Length < BUFSIZE) ? (int)fs.Length : BUFSIZE;
+        //     fs.Seek(-buf_size, SeekOrigin.End);
+        //     for (int i = 0; i < buf_size; i += fs.Read(buf, i, buf_size - i));
+        //     int p = FindLast(buf_size - 1, "%%EOF");
+        //     if (p < 0) return -1;
+        //     p = FindLast(p, K_STARTXREF);
+        //     if (p < 0) return -1;
+        //     return Int64.Parse(GetString(p + 1, 1));
+        // }
+
+
+        // public static long XrefPos(FileStream fs)
+        // {
+        //     int buf_size = (fs.Length < BUFSIZE) ? (int)fs.Length : BUFSIZE;
+        //     byte[] buf = new byte[buf_size];
+        //     fs.Seek(0, SeekOrigin.Begin);
+        //     for (int i = 0; i < buf_size; i += fs.Read(buf, i, buf_size - i));
+        //     for (int sp = 0, i = 0; i < buf_size; i ++) {
+        //         if (buf[i] == 10 || buf[i] == 13) {
+        //             int sz = i - sp;
+        //             byte[] ba = new byte[sz];
+        //             Array.Copy(buf, sp, ba, 0, sz);
+        //             sp = i + 1;
+        //         }
+        //     }
+        //     int buf_size = (fs.Length < BUFSIZE) ? (int)fs.Length : BUFSIZE;
+        //     fs.Seek(-buf_size, SeekOrigin.End);
+        //     for (int i = 0; i < buf_size; i += fs.Read(buf, i, buf_size - i));
+        //     int p = FindLast(buf_size - 1, "%%EOF");
+        //     if (p < 0) return -1;
+        //     p = FindLast(p, K_STARTXREF);
+        //     if (p < 0) return -1;
+        //     return Int64.Parse(GetString(p + 1, 1));
+        // }
+
+        public static long XrefPos(FileStream fs)
+        {
+            int buf_size = (fs.Length < BUFSIZE) ? (int)fs.Length : BUFSIZE;
+            fs.Seek(-buf_size, SeekOrigin.End);
+            byte[] buf = new byte[BUFSIZE];
+            for (int i = 0; i < buf_size; i += fs.Read(buf, i, buf_size - i));
+            int p = FindLast(buf_size - 1, "%%EOF");
+            if (p < 0) return -1;
+            p = FindLast(p, K_STARTXREF);
+            if (p < 0) return -1;
+            return Int64.Parse(GetString(p + 1, 1));
+        }
+
+        // public long GetObj(FileStream st)
+        // {
+        //     int buf_size = (st.Length < BUFSIZE) ? (int)fs.Length : BUFSIZE;
+        //     byte[] buf = new byte[BUFSIZE];
+        //     fs.Seek(0, SeekOrigin.Begin);
+        //     for (int i = 0; i < buf_size; i += st.Read(buf, i, buf_size - i));
+        //     for (int sp = 0, i = 0; i < buf_size; i ++) {
+        //         if (buf[i] == 10 || buf[i] == 13) {
+        //             int sz = i - sp;
+        //             byte[] ba = new byte[sz];
+        //             Array.Copy(buf, sp, ba, 0, sz);
+        //             sp = i + 1;
+        //         }
+        //     }
+        // }
+
+
+
+        public bool ReadFrom()
+        {
+            using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+            {
+                //get first object
+                long pos = GetObj(fs);
+                //get xref address
+                xre_pos = XrefPos(fs);
+                if (xref_pos < 0) return false;
+
+                //get xref table
+                PdfParser parser = new PdfParser();
+                parser.token(fs, xref_pos);
+            }
+            return true;
+        }
+    }
+}

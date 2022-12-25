@@ -1,0 +1,52 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using System.IO.Compression;
+
+namespace Document.Pdf
+{
+    public class PdfReader
+    {
+        Stream st;
+        long pos;
+        long rp;
+
+        public PdfReader(Stream st)
+        {
+            this.st = st;
+            pos = 0;
+            rp = 0;
+        }
+        public long Position
+        {
+            set {
+                this.pos = pos;
+                rp = pos;
+            }
+            get {
+                return pos;
+            }
+        }
+        public byte[] ReadLine()
+        {
+            using (var ms = new MemoryStream())
+            {
+                int b;
+                while ((b = st.ReadByte()) >= 0) {
+                    rp ++;
+                    if (b == 10 || b == 13) continue;
+                    ms.WriteByte(b);
+                    break;
+                }
+                pos = rp;
+                while ((b = st.ReadByte()) >= 0) {
+                    rp ++;
+                    if (b == 10 || b == 13) break;
+                    ms.WriteByte(b);
+                }
+                return ms.GetBuffer();
+            }
+        }
+    }
+}
