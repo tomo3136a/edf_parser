@@ -61,20 +61,14 @@ XFDFの形式は、「ISO 19444-1」に準拠する。
 
 ## 子要素
 
-ルート`<xfdf ...>`の子要素としてフォームデータや注釈を配置する。
+ルート`<xfdf ...>`の子要素としてフォームデータやコメントを配置する。
 
 * `<fields>` [フォームデータ](format_xfdf_fields.md)
-* `<annots>` [注釈](format_xfdf_annots.md)
+* `<annots>` [コメント](format_xfdf_annots.md)
   * [テキストの校正](format_xfdf_proof.md)
   * [テキスト](format_xfdf_text.md)
   * [図形](format_xfdf_figure.md)
   * [スタンプ](format_xfdf_stamp.md)
   * [埋め込みオブジェクト](format_xfdf_embd.md)
-
----
-
-## そのほか
-
-* [座標変換](format_xfdf_trans.md)
 
 ---
